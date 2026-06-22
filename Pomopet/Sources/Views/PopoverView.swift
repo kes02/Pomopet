@@ -53,11 +53,7 @@ struct PopoverView: View {
     private var mainContent: some View {
         VStack(spacing: 14) {
             if let creature = controller.currentCreature {
-                CreatureView(
-                    species: creature.species,
-                    stage: creature.stage,
-                    size: 90
-                )
+                creatureScreen(creature)
 
                 VStack(spacing: 4) {
                     Text(creature.species.name)
@@ -87,6 +83,47 @@ struct PopoverView: View {
 
             timerSection
         }
+    }
+
+    // 레트로 "게임 화면" 패널: 어두운 배경 + 픽셀 생물 + Lv 뱃지
+    private func creatureScreen(_ creature: Creature) -> some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 12)
+                .fill(
+                    LinearGradient(
+                        colors: [Color(hex: 0x121726), Color(hex: 0x1c2438)],
+                        startPoint: .top, endPoint: .bottom
+                    )
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .strokeBorder(creature.species.color.opacity(0.45), lineWidth: 1.5)
+                )
+
+            CreatureView(species: creature.species, stage: creature.stage, size: 96)
+
+            // 좌상단 Lv 뱃지
+            VStack {
+                HStack {
+                    Text("Lv.\(creature.level)")
+                        .font(.system(size: 13, weight: .heavy, design: .monospaced))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
+                        .background(Capsule().fill(creature.species.color))
+                    Spacer()
+                    // 집중 완료 직후엔 레벨업 연출
+                    if controller.phase == .breakReady {
+                        Text("LV UP!")
+                            .font(.system(size: 12, weight: .heavy, design: .monospaced))
+                            .foregroundStyle(.yellow)
+                    }
+                }
+                Spacer()
+            }
+            .padding(8)
+        }
+        .frame(height: 132)
     }
 
     // 타이머 영역: 현재 단계에 따라 다른 버튼/표시

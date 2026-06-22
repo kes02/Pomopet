@@ -26,10 +26,7 @@ struct StatsView: View {
             HStack(spacing: 12) {
                 ForEach(SpeciesCatalog.all) { species in
                     VStack(spacing: 2) {
-                        Image(systemName: species.symbol(for: .adult))
-                            .font(.system(size: 22))
-                            .foregroundStyle(species.color)
-                            .symbolRenderingMode(.hierarchical)
+                        PixelSpriteView(sprite: species.sprite(for: .adult), size: 44)
                         Text(species.name)
                             .font(.caption2)
                             .foregroundStyle(.secondary)

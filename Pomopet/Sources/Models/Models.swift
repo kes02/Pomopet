@@ -26,6 +26,9 @@ final class Creature {
         EvolutionStage.stage(for: sessionsCompleted)
     }
 
+    /// 레벨. 집중 세션을 완료할 때마다 1씩 오릅니다 (Lv.1 알 → Lv.10 완전체).
+    var level: Int { sessionsCompleted + 1 }
+
     /// 이 종의 정의
     var species: Species {
         SpeciesCatalog.species(for: speciesId)
