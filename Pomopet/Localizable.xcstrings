@@ -144,6 +144,17 @@
         }
       }
     },
+    "언어": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Language"
+          }
+        }
+      }
+    },
     "업데이트": {
       "extractionState": "manual",
       "localizations": {

@@ -11,6 +11,9 @@ struct PomopetApp: App {
     // 인앱 업데이트 체크 (GitHub Releases 조회 → 새 버전 안내)
     @StateObject private var updateChecker = UpdateChecker()
 
+    // 앱 내 언어 전환 (시스템 언어와 무관하게 ko/en)
+    @StateObject private var lang = LanguageManager()
+
     // SwiftData 저장소 컨테이너
     let modelContainer: ModelContainer
 
@@ -27,7 +30,8 @@ struct PomopetApp: App {
     var body: some Scene {
         // MenuBarExtra: 메뉴바에 아이콘을 띄우는 macOS 13+ API
         MenuBarExtra {
-            PopoverView(controller: controller, updateChecker: updateChecker)
+            PopoverView(controller: controller, updateChecker: updateChecker, lang: lang)
+                .environment(\.locale, lang.locale)   // 선택 언어로 포맷/번역 갱신
                 .modelContainer(modelContainer)
                 .onAppear {
                     // 컨트롤러에 SwiftData 컨텍스트 연결 (최초 1회)

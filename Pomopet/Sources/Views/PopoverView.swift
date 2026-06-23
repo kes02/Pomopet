@@ -6,6 +6,7 @@ import AppKit
 struct PopoverView: View {
     @ObservedObject var controller: PomopetController
     @ObservedObject var updateChecker: UpdateChecker
+    @ObservedObject var lang: LanguageManager
     @State private var showingStats = false
     @State private var showingSettings = false
 
@@ -20,7 +21,7 @@ struct PopoverView: View {
             if controller.needsCharacter {
                 CharacterUploadView(controller: controller)
             } else if showingSettings {
-                SettingsView(controller: controller, updateChecker: updateChecker)
+                SettingsView(controller: controller, updateChecker: updateChecker, lang: lang)
             } else if showingStats {
                 StatsView(controller: controller)
             } else {
