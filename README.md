@@ -8,6 +8,14 @@ Pomopet은 좋아하는 캐릭터 이미지를 **도트(픽셀)로 변환**해 �
 
 ---
 
+## 📸 스크린샷
+
+| 캐릭터 (활성화) | 설정 | 통계 · 잔디 |
+|:---:|:---:|:---:|
+| ![메인](docs/screenshots/main.png) | ![설정](docs/screenshots/settings.png) | ![통계](docs/screenshots/stats.png) |
+
+---
+
 ## ✨ 특징
 
 - **🖼️ 내 캐릭터 업로드** — 좋아하는 이미지를 올리면 도트로 변환해 펫으로 사용
@@ -21,31 +29,36 @@ Pomopet은 좋아하는 캐릭터 이미지를 **도트(픽셀)로 변환**해 �
 
 ---
 
-## 📥 설치 & 실행
+## 📥 설치
 
-> 아직 정식 배포(서명·공증된 `.app`) 전이라, 소스에서 직접 빌드해 사용합니다.
+> **요구 사항: macOS 14 (Sonoma) 이상** · Apple Silicon + Intel 모두 지원(유니버설)
 
-### 요구 사항
-- macOS 26.5 이상 (Xcode 프로젝트의 Deployment Target — 필요 시 낮출 수 있음)
-- Xcode 16 이상
+### 방법 1. Homebrew (추천)
+```bash
+brew install --cask kes02/pomopet/pomopet
+```
+cask가 Gatekeeper 격리 속성을 자동으로 제거해 바로 실행됩니다.
 
-### 방법 1. Xcode에서 실행
+### 방법 2. DMG 직접 다운로드
+1. [Releases](https://github.com/kes02/Pomopet/releases)에서 최신 `Pomopet-x.y.z.dmg` 다운로드
+2. dmg를 열고 **Pomopet.app**을 **Applications**로 드래그
+3. 처음 실행 시 — **미서명 빌드**라 Gatekeeper 경고가 떠요. 둘 중 하나로 통과:
+   - `Applications`에서 **Pomopet 우클릭 → 열기**, 또는
+   - 터미널에서:
+     ```bash
+     xattr -dr com.apple.quarantine /Applications/Pomopet.app
+     ```
+
+> 💡 "확인되지 않은 개발자" 경고는 Apple Developer 서명/공증이 없어서 나타납니다. 기능엔 지장이 없으며, 위 과정은 **최초 1회만** 필요합니다.
+
+### 방법 3. 소스에서 빌드 (개발자용)
 ```bash
 git clone https://github.com/kes02/Pomopet.git
 cd Pomopet
-open Pomopet.xcodeproj
+open Pomopet.xcodeproj   # Xcode에서 ⌘R
+# 또는 DMG 직접 패키징:
+bash scripts/package-dmg.sh 1.0.0   # → dist/Pomopet-1.0.0.dmg
 ```
-Xcode에서 `⌘R` (Run) → 메뉴바에 발바닥/달 아이콘이 나타납니다.
-
-### 방법 2. 앱으로 빌드해서 설치
-```bash
-git clone https://github.com/kes02/Pomopet.git
-cd Pomopet
-xcodebuild -project Pomopet.xcodeproj -scheme Pomopet -configuration Release -derivedDataPath build
-cp -R build/Build/Products/Release/Pomopet.app /Applications/
-open /Applications/Pomopet.app
-```
-> 서명되지 않은 빌드라 처음 실행 시 우클릭 → "열기"로 Gatekeeper를 통과시켜야 할 수 있습니다.
 
 ---
 

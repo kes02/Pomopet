@@ -37,10 +37,15 @@ struct ColorGridView: View {
     }
 }
 
-// 문자 스프라이트도 색 격자로 변환해, 빌트인/커스텀을 같은 렌더러로 그립니다.
-extension PixelSprite {
-    var colorGrid: [[Color?]] {
-        rows.map { line in line.map { palette[$0] } }
+// MARK: - Color(hex:)
+// 팔레트·UI 색을 16진수로 간결하게 정의하기 위한 헬퍼.
+extension Color {
+    init(hex: UInt) {
+        self.init(
+            red: Double((hex >> 16) & 0xFF) / 255.0,
+            green: Double((hex >> 8) & 0xFF) / 255.0,
+            blue: Double(hex & 0xFF) / 255.0
+        )
     }
 }
 
