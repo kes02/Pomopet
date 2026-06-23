@@ -6,6 +6,7 @@ import AppKit
 struct PopoverView: View {
     @ObservedObject var controller: PomopetController
     @ObservedObject var updateChecker: UpdateChecker
+    @ObservedObject var lang: LanguageManager
     @State private var showingStats = false
     @State private var showingSettings = false
 
@@ -20,7 +21,7 @@ struct PopoverView: View {
             if controller.needsCharacter {
                 CharacterUploadView(controller: controller)
             } else if showingSettings {
-                SettingsView(controller: controller, updateChecker: updateChecker)
+                SettingsView(controller: controller, updateChecker: updateChecker, lang: lang)
             } else if showingStats {
                 StatsView(controller: controller)
             } else {
@@ -187,7 +188,7 @@ struct PopoverView: View {
         .frame(height: 140)
     }
 
-    private func metric(title: String, value: String) -> some View {
+    private func metric(title: LocalizedStringKey, value: LocalizedStringKey) -> some View {
         VStack(spacing: 2) {
             Text(value)
                 .font(.system(size: 15, weight: .bold, design: .rounded))
@@ -202,7 +203,7 @@ struct PopoverView: View {
         min(1.0, Double(controller.todaySessions) / Double(controller.dailyGoal))
     }
 
-    private var goalCaption: String {
+    private var goalCaption: LocalizedStringKey {
         if controller.isActiveToday {
             return "오늘 목표 달성! 연속 유지 중 🔥"
         }

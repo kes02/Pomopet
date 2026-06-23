@@ -25,7 +25,7 @@ struct StatsView: View {
         }
     }
 
-    private func statRow(label: String, value: String) -> some View {
+    private func statRow(label: LocalizedStringKey, value: LocalizedStringKey) -> some View {
         HStack {
             Text(label).font(.callout)
             Spacer()
@@ -33,7 +33,7 @@ struct StatsView: View {
         }
     }
 
-    private func formatMinutes(_ minutes: Int) -> String {
+    private func formatMinutes(_ minutes: Int) -> LocalizedStringKey {
         let h = minutes / 60
         let m = minutes % 60
         if h > 0 { return "\(h)시간 \(m)분" }
@@ -79,6 +79,7 @@ struct HeatmapView: View {
 struct SettingsView: View {
     @ObservedObject var controller: PomopetController
     @ObservedObject var updateChecker: UpdateChecker
+    @ObservedObject var lang: LanguageManager
     @State private var focus: Double
     @State private var breakV: Double
     @State private var dailyGoal: Double
@@ -86,9 +87,10 @@ struct SettingsView: View {
     @State private var checking = false                        // 수동 확인 진행 중
     @State private var checkResult: UpdateChecker.CheckOutcome? // 수동 확인 직후 잠깐 보여줄 결과
 
-    init(controller: PomopetController, updateChecker: UpdateChecker) {
+    init(controller: PomopetController, updateChecker: UpdateChecker, lang: LanguageManager) {
         self.controller = controller
         self.updateChecker = updateChecker
+        self.lang = lang
         _focus = State(initialValue: Double(controller.settings.focusMinutes))
         _breakV = State(initialValue: Double(controller.settings.breakMinutes))
         _dailyGoal = State(initialValue: Double(controller.settings.dailyGoalSessions))
@@ -139,6 +141,8 @@ struct SettingsView: View {
 
             Divider()
 
+            languageRow
+
             updateRow
 
             Button("Pomopet 종료") {
@@ -148,6 +152,29 @@ struct SettingsView: View {
             .foregroundStyle(.secondary)
             .font(.caption)
         }
+    }
+
+    // 언어 전환: 시스템 언어와 무관하게 한국어/영어를 버튼으로 직접 선택.
+    private var languageRow: some View {
+        HStack {
+            Text("언어").font(.caption).foregroundStyle(.secondary)
+            Spacer()
+            langButton("한국어", "ko")
+            langButton("English", "en")
+        }
+    }
+
+    // 언어 버튼 — 선택된 쪽은 강조(accent), 나머지는 흐리게. 라벨은 각 언어 고유명이라 verbatim.
+    private func langButton(_ title: String, _ code: String) -> some View {
+        let active = lang.code == code
+        return Button { lang.select(code) } label: {
+            Text(verbatim: title)
+                .font(.caption2)
+                .frame(minWidth: 46)
+        }
+        .buttonStyle(.borderedProminent)
+        .tint(active ? .accentColor : Color.gray.opacity(0.35))
+        .controlSize(.small)
     }
 
     // 버전 표시 + 수동 업데이트 확인. 새 버전이 있으면 버튼이 "받기"로 바뀌어 다운로드 페이지를 엽니다.
@@ -206,7 +233,7 @@ struct SettingsView: View {
     }
 
     // 수동 확인 결과 → 표시할 메시지/색. (새 버전 있음은 버튼이 "받기"로 안내하므로 메시지 생략)
-    private var manualStatus: (text: String, color: Color)? {
+    private var manualStatus: (text: LocalizedStringKey, color: Color)? {
         switch checkResult {
         case .upToDate:    return ("최신 버전이에요 ✓", .green)
         case .rateLimited: return ("잠시 후 다시 시도해 주세요 (GitHub 확인 한도 초과)", .orange)
@@ -223,13 +250,14 @@ struct SettingsView: View {
         }
     }
 
-    private func sliderRow(title: String, value: Binding<Double>,
-                           range: ClosedRange<Double>, unit: String) -> some View {
+    private func sliderRow(title: LocalizedStringKey, value: Binding<Double>,
+                           range: ClosedRange<Double>, unit: LocalizedStringKey) -> some View {
         VStack(spacing: 2) {
             HStack {
                 Text(title).font(.callout)
                 Spacer()
-                Text("\(Int(value.wrappedValue))\(unit)").font(.callout).fontWeight(.semibold)
+                (Text("\(Int(value.wrappedValue))") + Text(unit))
+                    .font(.callout).fontWeight(.semibold)
             }
             Slider(value: value, in: range, step: 1)
         }
