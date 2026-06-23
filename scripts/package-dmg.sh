@@ -32,7 +32,10 @@ xcodebuild \
   -configuration Release \
   -derivedDataPath "$DERIVED" \
   ARCHS="arm64 x86_64" ONLY_ACTIVE_ARCH=NO \
+  MARKETING_VERSION="$VERSION" \
   build | tail -1
+# ↑ MARKETING_VERSION 주입: 배포 앱이 자기 버전을 정확히 보고해야
+#   인앱 업데이트 체크가 "이미 최신"을 올바로 판단합니다(안 그러면 배너가 계속 뜸).
 
 APP_PATH="$DERIVED/Build/Products/Release/${APP_NAME}.app"
 if [[ ! -d "$APP_PATH" ]]; then
