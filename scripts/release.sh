@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+# Pomopet 릴리스: DMG 빌드 → GitHub Release 생성/업로드 → Homebrew cask 갱신.
+# 사용법: scripts/release.sh <version>   (예: scripts/release.sh 1.0.0)
+#
+# 필요: gh CLI 로그인(kes02), Homebrew 탭 repo(kes02/homebrew-pomopet) 존재.
+set -euo pipefail
+
+VERSION="${1:-}"
+if [[ -z "$VERSION" ]]; then
+  echo "사용법: $0 <version>   (예: $0 1.0.0)" >&2
+  exit 1
+fi
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
+
+APP_NAME="Pomopet"
+TAG="v${VERSION}"
+DMG_PATH="$ROOT/dist/${APP_NAME}-${VERSION}.dmg"
+REPO="kes02/Pomopet"
+TAP_REPO="kes02/homebrew-pomopet"
+
+# 1) DMG 빌드 + sha256 추출
+SHA="$(bash "$ROOT/scripts/package-dmg.sh" "$VERSION" | awk -F= '/^SHA256=/{print $2}')"
+if [[ -z "$SHA" || ! -f "$DMG_PATH" ]]; then
+  echo "DMG 생성 실패" >&2
+  exit 1
+fi
+echo "sha256=$SHA"
+
+# 2) GitHub Release 생성 (없으면) + DMG 업로드
+if gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1; then
+  echo "▶︎ 기존 릴리스 $TAG 에 자산 덮어쓰기…"
+  gh release upload "$TAG" "$DMG_PATH" --repo "$REPO" --clobber
+else
+  echo "▶︎ 릴리스 $TAG 생성…"
+  gh release create "$TAG" "$DMG_PATH" \
+    --repo "$REPO" \
+    --title "$APP_NAME $VERSION" \
+    --notes "내가 올린 캐릭터를 키우는 메뉴바 포모도로. 설치는 README 참고.
+
+미서명 빌드입니다 — 첫 실행 시 우클릭 → 열기, 또는:
+\`xattr -dr com.apple.quarantine /Applications/Pomopet.app\`"
+fi
+
+# 3) Homebrew cask 갱신 (탭 repo가 있을 때만)
+TAP_DIR="$(mktemp -d)"
+if gh repo clone "$TAP_REPO" "$TAP_DIR" -- -q 2>/dev/null; then
+  CASK="$TAP_DIR/Casks/pomopet.rb"
+  mkdir -p "$TAP_DIR/Casks"
+  cat > "$CASK" <<EOF
+cask "pomopet" do
+  version "${VERSION}"
+  sha256 "${SHA}"
+
+  url "https://github.com/kes02/Pomopet/releases/download/v#{version}/Pomopet-#{version}.dmg"
+  name "Pomopet"
+  desc "Menu bar Pomodoro timer with an uploaded character that wakes up as you study"
+  homepage "https://github.com/kes02/Pomopet"
+
+  app "Pomopet.app"
+
+  # 미서명 빌드: Gatekeeper 격리 속성 제거해 바로 실행되게 함
+  postflight do
+    system_command "/usr/bin/xattr",
+                   args: ["-dr", "com.apple.quarantine", "#{appdir}/Pomopet.app"]
+  end
+
+  zap trash: [
+    "~/Library/Containers/com.kes02.Pomopet",
+    "~/Library/Preferences/com.kes02.Pomopet.plist",
+  ]
+end
+EOF
+  ( cd "$TAP_DIR"
+    git add Casks/pomopet.rb
+    git commit -q -m "pomopet ${VERSION}" || true
+    git push -q )
+  echo "✅ Homebrew cask 갱신: $TAP_REPO (pomopet ${VERSION})"
+else
+  echo "ℹ︎ 탭 repo($TAP_REPO)가 없어 cask 갱신을 건너뜀. 먼저 탭을 만들어 주세요."
+fi
+
+rm -rf "$TAP_DIR"
+echo "🎉 릴리스 완료: $TAG"

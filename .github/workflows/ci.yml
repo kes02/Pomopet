@@ -1,0 +1,31 @@
+name: CI
+
+# 빌드가 깨지지 않는지 확인하는 체크. (릴리스는 로컬 scripts/release.sh 가 담당)
+# 릴리스를 CI에서 자동 빌드·업로드하면 DMG가 재생성 불가라 cask sha256과 어긋나므로,
+# 릴리스 산출물 생성은 단일 빌더(로컬 스크립트)로 일원화합니다.
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select latest stable Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Build
+        run: |
+          xcodebuild \
+            -project Pomopet.xcodeproj \
+            -scheme Pomopet \
+            -configuration Release \
+            -destination 'platform=macOS' \
+            build
