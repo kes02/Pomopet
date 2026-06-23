@@ -41,6 +41,7 @@ There are plenty of pet-raising Pomodoro apps. Pomopet differs in three ways.
 - **🍅 Dead-simple Pomodoro** — Just three settings: focus / break / daily goal
 - **🪶 Lightweight** — Lives only in the menu bar (no Dock icon). All graphics are rendered in code, with no external images
 - **🔄 Update notice** — The app tells you when a new version is out (details in [Updates](#-updates))
+- **🌐 Korean · English** — Follows your system language, or switch it yourself with a button in Settings
 
 ---
 
@@ -119,6 +120,7 @@ Since it's an unsigned build, it **won't auto-install**, but it does let you kno
 - **Break** — Rest time after a session (1–30 min)
 - **Daily goal** — Sessions needed to activate (1–20)
 - **Change character** — Swapping the image keeps your streak intact
+- **Language** — Switch between 한국어 / English instantly
 
 > Even if you change the daily goal midway, if you've already met it today your character won't sleep and your streak stays.
 
