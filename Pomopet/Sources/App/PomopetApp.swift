@@ -14,7 +14,7 @@ struct PomopetApp: App {
     init() {
         do {
             modelContainer = try ModelContainer(
-                for: Creature.self, CollectionEntry.self, AppStats.self
+                for: DailyRecord.self, AppStats.self
             )
         } catch {
             fatalError("SwiftData 컨테이너 생성 실패: \(error)")
@@ -31,7 +31,7 @@ struct PomopetApp: App {
                     controller.attach(context: modelContainer.mainContext)
                 }
         } label: {
-            // 메뉴바에 표시되는 라벨: 생물 심볼 + (집중 중이면) 남은 시간
+            // 메뉴바에 표시되는 라벨: 공부 상태(활성/잠듦) 심볼 + 연속일
             MenuBarLabel(controller: controller)
         }
         .menuBarExtraStyle(.window) // 팝오버 형태 (.menu가 아닌 커스텀 뷰)
@@ -39,7 +39,7 @@ struct PomopetApp: App {
 }
 
 // MARK: - MenuBarLabel
-// 메뉴바에 실제로 보이는 부분.
+// 메뉴바에 실제로 보이는 부분. 캐릭터가 깨어있으면 불꽃 + 연속일, 자고 있으면 달.
 struct MenuBarLabel: View {
     @ObservedObject var controller: PomopetController
 
@@ -48,6 +48,9 @@ struct MenuBarLabel: View {
             Image(systemName: controller.menuBarSymbol)
             if controller.phase.isCountingDown {
                 Text(controller.timeString)
+                    .monospacedDigit()
+            } else if controller.isActiveToday && controller.currentStreak > 0 {
+                Text("\(controller.currentStreak)")
                     .monospacedDigit()
             }
         }
