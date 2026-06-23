@@ -25,7 +25,7 @@ struct StatsView: View {
         }
     }
 
-    private func statRow(label: String, value: String) -> some View {
+    private func statRow(label: LocalizedStringKey, value: LocalizedStringKey) -> some View {
         HStack {
             Text(label).font(.callout)
             Spacer()
@@ -33,7 +33,7 @@ struct StatsView: View {
         }
     }
 
-    private func formatMinutes(_ minutes: Int) -> String {
+    private func formatMinutes(_ minutes: Int) -> LocalizedStringKey {
         let h = minutes / 60
         let m = minutes % 60
         if h > 0 { return "\(h)시간 \(m)분" }
@@ -206,7 +206,7 @@ struct SettingsView: View {
     }
 
     // 수동 확인 결과 → 표시할 메시지/색. (새 버전 있음은 버튼이 "받기"로 안내하므로 메시지 생략)
-    private var manualStatus: (text: String, color: Color)? {
+    private var manualStatus: (text: LocalizedStringKey, color: Color)? {
         switch checkResult {
         case .upToDate:    return ("최신 버전이에요 ✓", .green)
         case .rateLimited: return ("잠시 후 다시 시도해 주세요 (GitHub 확인 한도 초과)", .orange)
@@ -223,13 +223,14 @@ struct SettingsView: View {
         }
     }
 
-    private func sliderRow(title: String, value: Binding<Double>,
-                           range: ClosedRange<Double>, unit: String) -> some View {
+    private func sliderRow(title: LocalizedStringKey, value: Binding<Double>,
+                           range: ClosedRange<Double>, unit: LocalizedStringKey) -> some View {
         VStack(spacing: 2) {
             HStack {
                 Text(title).font(.callout)
                 Spacer()
-                Text("\(Int(value.wrappedValue))\(unit)").font(.callout).fontWeight(.semibold)
+                (Text("\(Int(value.wrappedValue))") + Text(unit))
+                    .font(.callout).fontWeight(.semibold)
             }
             Slider(value: value, in: range, step: 1)
         }

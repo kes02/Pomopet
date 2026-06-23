@@ -187,7 +187,7 @@ struct PopoverView: View {
         .frame(height: 140)
     }
 
-    private func metric(title: String, value: String) -> some View {
+    private func metric(title: LocalizedStringKey, value: LocalizedStringKey) -> some View {
         VStack(spacing: 2) {
             Text(value)
                 .font(.system(size: 15, weight: .bold, design: .rounded))
@@ -202,7 +202,7 @@ struct PopoverView: View {
         min(1.0, Double(controller.todaySessions) / Double(controller.dailyGoal))
     }
 
-    private var goalCaption: String {
+    private var goalCaption: LocalizedStringKey {
         if controller.isActiveToday {
             return "오늘 목표 달성! 연속 유지 중 🔥"
         }

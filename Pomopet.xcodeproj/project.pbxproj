@@ -86,10 +86,11 @@
 				};
 			};
 			buildConfigurationList = C299DD282FE8D7DA00E68521 /* Build configuration list for PBXProject "Pomopet" */;
-			developmentRegion = en;
+			developmentRegion = ko;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
+				ko,
 				Base,
 			);
 			mainGroup = C299DD242FE8D7DA00E68521;
