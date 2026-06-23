@@ -60,6 +60,13 @@ open Pomopet.xcodeproj   # Xcode에서 ⌘R
 bash scripts/package-dmg.sh 1.0.0   # → dist/Pomopet-1.0.0.dmg
 ```
 
+#### 릴리스 (메인테이너용)
+```bash
+scripts/release.sh 1.2.3   # DMG 빌드 → GitHub Release 업로드 → Homebrew cask(sha256) 갱신
+```
+> DMG는 재생성 시 해시가 바뀌므로 **릴리스 빌더는 이 스크립트 하나로 일원화**합니다.
+> GitHub Actions(`ci.yml`)는 빌드가 깨지지 않는지 확인하는 체크 전용입니다.
+
 ---
 
 ## 🚀 사용법
