@@ -5,9 +5,9 @@ name: CI
 # 릴리스 산출물 생성은 단일 빌더(로컬 스크립트)로 일원화합니다.
 on:
   push:
-    branches: [main, develop]
+    branches: [main, release, develop]
   pull_request:
-    branches: [main, develop]
+    branches: [main, release, develop]
   workflow_dispatch:
 
 jobs:
