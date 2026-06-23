@@ -24,7 +24,7 @@ Pomopet은 좋아하는 캐릭터 이미지를 **픽셀로 변환**해 키우는
 
 | 캐릭터 (활성화) | 설정 | 통계 · 잔디 |
 |:---:|:---:|:---:|
-| ![메인](docs/screenshots/main.png) | ![설정](docs/screenshots/settings.png) | ![통계](docs/screenshots/stats.png) |
+| <img src="docs/screenshots/main.png" width="250" alt="메인"> | <img src="docs/screenshots/settings.png" width="250" alt="설정"> | <img src="docs/screenshots/stats.png" width="250" alt="통계"> |
 
 ---
 
