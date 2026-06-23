@@ -258,9 +258,14 @@ final class PomopetController: ObservableObject {
         return String(format: "%02d:%02d", m, s)
     }
 
-    /// 메뉴바에 표시할 SF Symbol 이름 (활성=불꽃, 잠듦=달, 캐릭터 없음=점선 원)
-    var menuBarSymbol: String {
-        if needsCharacter { return "circle.dashed" }
-        return isActiveToday ? "flame.fill" : "moon.zzz.fill"
+    /// 메뉴바에 표시할 펫 표정. 핵심 컨셉(펫을 재우지 않기)을 한눈에 —
+    /// 집중 중·오늘 목표 달성 = 깨어난 얼굴, 휴식·목표 미달 = 잠든 얼굴.
+    var menuBarFace: String {
+        if needsCharacter { return "(·_·)" }
+        switch phase {
+        case .focusing: return "(•ᴗ•)"   // 집중 — 깨어남
+        case .resting:  return "(-.-)"   // 휴식 — 잠듦
+        default:        return isActiveToday ? "(•ᴗ•)" : "(-.-)"
+        }
     }
 }

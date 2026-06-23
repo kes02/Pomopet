@@ -52,7 +52,9 @@ struct MenuBarLabel: View {
 
     var body: some View {
         HStack(spacing: 4) {
-            Image(systemName: controller.menuBarSymbol)
+            // 펫 얼굴(깨어남/잠듦) — 메뉴바는 작으니 얼굴만
+            Text(controller.menuBarFace)
+                .font(.system(size: 12, weight: .medium, design: .monospaced))
             if controller.phase.isCountingDown {
                 Text(controller.timeString)
                     .monospacedDigit()
