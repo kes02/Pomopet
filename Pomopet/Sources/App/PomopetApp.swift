@@ -8,6 +8,9 @@ struct PomopetApp: App {
     // 앱 전역에서 공유되는 컨트롤러
     @StateObject private var controller = PomopetController()
 
+    // 인앱 업데이트 체크 (GitHub Releases 조회 → 새 버전 안내)
+    @StateObject private var updateChecker = UpdateChecker()
+
     // SwiftData 저장소 컨테이너
     let modelContainer: ModelContainer
 
@@ -24,11 +27,15 @@ struct PomopetApp: App {
     var body: some Scene {
         // MenuBarExtra: 메뉴바에 아이콘을 띄우는 macOS 13+ API
         MenuBarExtra {
-            PopoverView(controller: controller)
+            PopoverView(controller: controller, updateChecker: updateChecker)
                 .modelContainer(modelContainer)
                 .onAppear {
                     // 컨트롤러에 SwiftData 컨텍스트 연결 (최초 1회)
                     controller.attach(context: modelContainer.mainContext)
+                }
+                .task {
+                    // 실행 시 하루 1회 새 버전 확인 (네트워크 실패는 조용히 무시)
+                    await updateChecker.checkIfDue()
                 }
         } label: {
             // 메뉴바에 표시되는 라벨: 공부 상태(활성/잠듦) 심볼 + 연속일
