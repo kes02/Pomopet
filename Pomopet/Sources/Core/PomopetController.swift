@@ -258,14 +258,10 @@ final class PomopetController: ObservableObject {
         return String(format: "%02d:%02d", m, s)
     }
 
-    /// 메뉴바에 표시할 펫 표정. 핵심 컨셉(펫을 재우지 않기)을 한눈에 —
-    /// 집중 중·오늘 목표 달성 = 깨어난 얼굴, 휴식·목표 미달 = 잠든 얼굴.
+    /// 메뉴바 유휴 상태의 펫 표정. 오늘 완료 세션이 0이면 잠든 얼굴, 1개라도 있으면 깨어난 얼굴.
+    /// (집중·휴식 진행 중엔 표정 대신 시간을 보여주므로 MenuBarLabel에서 이 값을 쓰지 않음)
     var menuBarFace: String {
         if needsCharacter { return "(·_·)" }
-        switch phase {
-        case .focusing: return "(•ᴗ•)"   // 집중 — 깨어남
-        case .resting:  return "(-.-)"   // 휴식 — 잠듦
-        default:        return isActiveToday ? "(•ᴗ•)" : "(-.-)"
-        }
+        return todaySessions > 0 ? "(•ᴗ•)" : "(-.-)"
     }
 }
