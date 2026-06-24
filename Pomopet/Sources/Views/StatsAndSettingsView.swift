@@ -78,18 +78,16 @@ struct HeatmapView: View {
 // 타이머 길이 + 일일 목표 + 캐릭터 변경.
 struct SettingsView: View {
     @ObservedObject var controller: PomopetController
-    @ObservedObject var updateChecker: UpdateChecker
+    @ObservedObject var updater: UpdaterManager
     @ObservedObject var lang: LanguageManager
     @State private var focus: Double
     @State private var breakV: Double
     @State private var dailyGoal: Double
     @State private var didSave = false
-    @State private var checking = false                        // 수동 확인 진행 중
-    @State private var checkResult: UpdateChecker.CheckOutcome? // 수동 확인 직후 잠깐 보여줄 결과
 
-    init(controller: PomopetController, updateChecker: UpdateChecker, lang: LanguageManager) {
+    init(controller: PomopetController, updater: UpdaterManager, lang: LanguageManager) {
         self.controller = controller
-        self.updateChecker = updateChecker
+        self.updater = updater
         self.lang = lang
         _focus = State(initialValue: Double(controller.settings.focusMinutes))
         _breakV = State(initialValue: Double(controller.settings.breakMinutes))
@@ -177,69 +175,29 @@ struct SettingsView: View {
         .controlSize(.small)
     }
 
-    // 버전 표시 + 수동 업데이트 확인. 새 버전이 있으면 버튼이 "받기"로 바뀌어 다운로드 페이지를 엽니다.
+    // 버전 표시 + Sparkle 업데이트 확인. 버튼을 누르면 Sparkle이 자체 창(버전·릴리스노트·설치+재시작)을 띄움.
     private var updateRow: some View {
         VStack(spacing: 6) {
             HStack {
                 Text("버전").font(.caption).foregroundStyle(.secondary)
                 Spacer()
-                Text("v\(updateChecker.current)").font(.caption).foregroundStyle(.secondary)
+                Text("v\(appVersion)").font(.caption).foregroundStyle(.secondary)
             }
 
             Button {
-                if updateChecker.updateAvailable {
-                    updateChecker.openReleasePage()
-                } else {
-                    runManualCheck()
-                }
+                updater.checkForUpdates()
             } label: {
-                Group {
-                    if checking {
-                        Label("확인 중…", systemImage: "arrow.triangle.2.circlepath")
-                    } else if updateChecker.updateAvailable {
-                        Label("새 버전 \(updateChecker.latestVersion ?? "") 받기", systemImage: "arrow.down.circle")
-                    } else {
-                        Label("업데이트 확인", systemImage: "arrow.triangle.2.circlepath")
-                    }
-                }
-                .frame(maxWidth: .infinity)
+                Label("업데이트 확인", systemImage: "arrow.triangle.2.circlepath")
+                    .frame(maxWidth: .infinity)
             }
             .buttonStyle(.bordered)
             .controlSize(.small)
-            .disabled(checking)
-
-            // 수동 확인 직후에만 잠깐 뜨는 결과 메시지 (자동 확인·화면 재방문 시엔 안 뜸)
-            if let status = manualStatus {
-                Text(status.text)
-                    .font(.caption2)
-                    .foregroundStyle(status.color)
-                    .multilineTextAlignment(.center)
-            }
+            .disabled(!updater.canCheckForUpdates)
         }
     }
 
-    // "업데이트 확인"을 직접 눌렀을 때만 실행. 결과를 잠깐 보여주고 스스로 사라짐.
-    private func runManualCheck() {
-        checkResult = nil
-        checking = true
-        Task {
-            let result = await updateChecker.check()
-            checking = false
-            checkResult = result
-            // 3.5초 뒤 메시지 숨김 — 그 사이 새 결과로 덮이지 않았을 때만
-            try? await Task.sleep(nanoseconds: 3_500_000_000)
-            if checkResult == result { checkResult = nil }
-        }
-    }
-
-    // 수동 확인 결과 → 표시할 메시지/색. (새 버전 있음은 버튼이 "받기"로 안내하므로 메시지 생략)
-    private var manualStatus: (text: LocalizedStringKey, color: Color)? {
-        switch checkResult {
-        case .upToDate:    return ("최신 버전이에요 ✓", .green)
-        case .rateLimited: return ("잠시 후 다시 시도해 주세요 (GitHub 확인 한도 초과)", .orange)
-        case .failed:      return ("업데이트를 확인하지 못했어요 · 인터넷 연결을 확인해 주세요", .orange)
-        case .updateFound, .none: return nil
-        }
+    private var appVersion: String {
+        (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) ?? "?"
     }
 
     private func showSavedMessage() {

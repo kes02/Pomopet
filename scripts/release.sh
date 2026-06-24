@@ -19,6 +19,14 @@ TAG="v${VERSION}"
 DMG_PATH="$ROOT/dist/${APP_NAME}-${VERSION}.dmg"
 REPO="kes02/Pomopet"
 TAP_REPO="kes02/homebrew-pomopet"
+RELEASE_BRANCH="main"   # 릴리스 태그가 찍히는 프로덕션 브랜치 (develop → release → main)
+
+# 0) 릴리스 브랜치 확인 — DMG는 현재 작업트리에서 빌드되므로, 태그 대상(main)과 반드시 일치해야 함.
+CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+if [[ "$CURRENT_BRANCH" != "$RELEASE_BRANCH" ]]; then
+  echo "현재 브랜치가 '$CURRENT_BRANCH' 입니다. 릴리스는 '$RELEASE_BRANCH'에서 실행하세요 (release → main 승격 후)." >&2
+  exit 1
+fi
 
 # 1) DMG 빌드 + sha256 추출
 SHA="$(bash "$ROOT/scripts/package-dmg.sh" "$VERSION" | awk -F= '/^SHA256=/{print $2}')"
@@ -36,11 +44,43 @@ else
   echo "▶︎ 릴리스 $TAG 생성…"
   gh release create "$TAG" "$DMG_PATH" \
     --repo "$REPO" \
+    --target "$RELEASE_BRANCH" \
     --title "$APP_NAME $VERSION" \
     --notes "내가 올린 캐릭터를 키우는 메뉴바 포모도로. 설치는 README 참고.
 
 미서명 빌드입니다 — 첫 실행 시 우클릭 → 열기, 또는:
 \`xattr -dr com.apple.quarantine /Applications/Pomopet.app\`"
+fi
+
+# 2.5) Sparkle appcast 생성 → EdDSA 서명 → 릴리스 자산으로 업로드.
+#   SUFeedURL = releases/latest/download/appcast.xml (Info.plist). sign_update가 Keychain의 개인키로 서명.
+SIGN_TOOL="$(find "$ROOT/build/DerivedData" -path '*Sparkle*/bin/sign_update' ! -path '*old_dsa*' 2>/dev/null | head -1)"
+if [[ -z "$SIGN_TOOL" ]]; then
+  echo "⚠︎ sign_update 도구를 못 찾음(Sparkle 패키지 미resolve?). appcast 생략." >&2
+else
+  echo "▶︎ DMG EdDSA 서명 + appcast 생성…"
+  SIG_ATTRS="$("$SIGN_TOOL" "$DMG_PATH")"   # → sparkle:edSignature="…" length="…"  (최초 1회 Keychain 접근 허용 필요)
+  DMG_URL="https://github.com/${REPO}/releases/download/${TAG}/${APP_NAME}-${VERSION}.dmg"
+  PUBDATE="$(date -u '+%a, %d %b %Y %H:%M:%S +0000')"
+  APPCAST="$ROOT/dist/appcast.xml"
+  cat > "$APPCAST" <<XML
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+  <channel>
+    <title>Pomopet</title>
+    <item>
+      <title>${VERSION}</title>
+      <pubDate>${PUBDATE}</pubDate>
+      <sparkle:version>${VERSION}</sparkle:version>
+      <sparkle:shortVersionString>${VERSION}</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <enclosure url="${DMG_URL}" type="application/octet-stream" ${SIG_ATTRS} />
+    </item>
+  </channel>
+</rss>
+XML
+  gh release upload "$TAG" "$APPCAST" --repo "$REPO" --clobber
+  echo "✅ appcast 게시: https://github.com/${REPO}/releases/latest/download/appcast.xml"
 fi
 
 # 3) Homebrew cask 갱신 (탭 repo가 있을 때만)
