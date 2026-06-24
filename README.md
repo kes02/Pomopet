@@ -58,14 +58,14 @@ cask가 Gatekeeper 격리 속성을 자동으로 제거해 바로 실행됩니�
 ### 방법 2. DMG 직접 다운로드
 1. [Releases](https://github.com/kes02/Pomopet/releases)에서 최신 `Pomopet-x.y.z.dmg` 다운로드
 2. dmg를 열고 **Pomopet.app**을 **Applications**로 드래그
-3. 처음 실행 시 — **미서명 빌드**라 Gatekeeper 경고가 떠요. 둘 중 하나로 통과:
-   - `Applications`에서 **Pomopet 우클릭 → 열기**, 또는
-   - 터미널에서:
+3. 처음 실행 시 — **미서명 빌드**라 macOS가 *"악성 코드가 없음을 확인할 수 없습니다"* 라며 막습니다. **macOS Sequoia(15)부터는 "우클릭 → 열기" 우회가 사라졌어요.** 둘 중 하나로 통과:
+   - **터미널** (가장 빠름):
      ```bash
      xattr -dr com.apple.quarantine /Applications/Pomopet.app
      ```
+   - 또는 **시스템 설정 → 개인정보 보호 및 보안** → 아래로 스크롤 → "Pomopet이(가) 차단됨" 옆 **"그래도 열기"** → 다시 실행 후 한 번 더 확인
 
-> 💡 "확인되지 않은 개발자" 경고는 Apple Developer 서명/공증이 없어서 나타납니다. 기능엔 지장이 없으며, 위 과정은 **최초 1회만** 필요합니다.
+> 💡 차단 다이얼로그에서 **"휴지통으로 이동"을 누르지 마세요**(앱이 삭제됩니다) — "완료"를 누르고 위 방법으로 여세요. Apple 서명/공증이 없어 생기는 일이며 기능엔 지장이 없고, **최초 1회만** 필요합니다. (위 **Homebrew**로 설치하면 이 과정 자체가 필요 없어요.)
 
 ### 방법 3. 소스에서 빌드 (개발자용)
 ```bash
