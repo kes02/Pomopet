@@ -58,14 +58,14 @@ The cask automatically removes the Gatekeeper quarantine attribute, so it runs r
 ### Option 2. Download the DMG directly
 1. Download the latest `Pomopet-x.y.z.dmg` from [Releases](https://github.com/kes02/Pomopet/releases)
 2. Open the dmg and drag **Pomopet.app** into **Applications**
-3. On first launch — since it's an **unsigned build**, Gatekeeper will warn you. Pass it one of two ways:
-   - In `Applications`, **right-click Pomopet → Open**, or
-   - In Terminal:
+3. On first launch — since it's an **unsigned build**, macOS blocks it (*"can't verify it's free of malware"*). **On macOS Sequoia (15) the old "right-click → Open" trick is gone.** Pass it one of two ways:
+   - **Terminal** (fastest):
      ```bash
      xattr -dr com.apple.quarantine /Applications/Pomopet.app
      ```
+   - or **System Settings → Privacy & Security** → scroll down → click **"Open Anyway"** next to "Pomopet was blocked" → launch again and confirm once more
 
-> 💡 The "unidentified developer" warning appears because there's no Apple Developer signature/notarization. It doesn't affect functionality, and you only need to do this **once**.
+> 💡 In the block dialog, **don't click "Move to Trash"** (it deletes the app) — click "Done" and use one of the methods above. This happens only because there's no Apple signature/notarization; it doesn't affect functionality, and you only need to do it **once**. (Installing via **Homebrew** above skips this entirely.)
 
 ### Option 3. Build from source (for developers)
 ```bash
