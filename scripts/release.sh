@@ -10,6 +10,12 @@ if [[ -z "$VERSION" ]]; then
   echo "사용법: $0 <version>   (예: $0 1.0.0)" >&2
   exit 1
 fi
+# 버전 형식 검증 — VERSION이 appcast XML·cask·태그·파일명에 그대로 들어가므로
+# semver(major.minor.patch)만 허용해 이상값/XML·셸 메타문자 주입을 원천 차단.
+if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  echo "버전 형식 오류: '$VERSION' — 'major.minor.patch' 형식만 허용 (예: 1.2.0)." >&2
+  exit 1
+fi
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
@@ -48,8 +54,9 @@ else
     --title "$APP_NAME $VERSION" \
     --notes "내가 올린 캐릭터를 키우는 메뉴바 포모도로. 설치는 README 참고.
 
-미서명 빌드입니다 — 첫 실행 시 우클릭 → 열기, 또는:
-\`xattr -dr com.apple.quarantine /Applications/Pomopet.app\`"
+미서명 빌드입니다 — macOS Sequoia에선 '우클릭→열기'가 막혀, 첫 실행이 차단되면:
+\`xattr -dr com.apple.quarantine /Applications/Pomopet.app\`
+또는 시스템 설정 → 개인정보 보호 및 보안 → '그래도 열기'. (Homebrew 설치 시 불필요)"
 fi
 
 # 2.5) Sparkle appcast 생성 → EdDSA 서명 → 릴리스 자산으로 업로드.
