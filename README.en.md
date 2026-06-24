@@ -26,7 +26,17 @@ There are plenty of pet-raising Pomodoro apps. Pomopet differs in three ways.
 
 | Character (active) | Settings | Stats · Heatmap |
 |:---:|:---:|:---:|
-| <img src="docs/screenshots/main.png" width="250" alt="Main"> | <img src="docs/screenshots/settings.png" width="250" alt="Settings"> | <img src="docs/screenshots/stats.png" width="250" alt="Stats"> |
+| <img src="docs/screenshots/en/en_main.png" width="250" alt="Main"> | <img src="docs/screenshots/en/en_settings.png" width="250" alt="Settings"> | <img src="docs/screenshots/en/en_stats.png" width="250" alt="Stats"> |
+
+### 🖥️ In the menu bar
+
+Once it's running, it lives in your Mac's menu bar like this.
+
+| No focus today (asleep) | Focused today (awake) | Focusing / break |
+|:---:|:---:|:---:|
+| <img src="docs/screenshots/bar/sleep.png" height="36" alt="Sleeping pet"> | <img src="docs/screenshots/bar/wakeup.png" height="36" alt="Awake pet"> | <img src="docs/screenshots/bar/minutes.png" height="36" alt="Time remaining"> |
+
+> If you haven't focused at all today it stays asleep as `(-.-)`; after even one session it wakes up to `(•ᴗ•)`. During focus or break, it shows the time remaining.
 
 ---
 
@@ -36,7 +46,7 @@ There are plenty of pet-raising Pomodoro apps. Pomopet differs in three ways.
 - **🔥 Streak** — Hit your daily goal to build a streak; break it and it resets
 - **😴 Awake / Asleep** — Meet today's goal and your character wakes up in color and bounces; otherwise it sleeps in grayscale
 - **🏅 Milestone aura** — A glowing border: 3-day streak BRONZE → 7 SILVER → 30 GOLD → 100 DIAMOND
-- **🌱 Activity heatmap** — See the last 35 days of study at a glance
+- **🌱 Activity heatmap** — Your study record as a monthly calendar (browse months · hover a day for details)
 - **🎯 Daily goal** — Set how many sessions a day are needed to "activate" (1–20)
 - **🍅 Dead-simple Pomodoro** — Just three settings: focus / break / daily goal
 - **🪶 Lightweight** — Lives only in the menu bar (no Dock icon). All graphics are rendered in code, with no external images

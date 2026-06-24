@@ -26,7 +26,17 @@ Pomopet은 좋아하는 캐릭터 이미지를 **픽셀로 변환**해 키우는
 
 | 캐릭터 (활성화) | 설정 | 통계 · 잔디 |
 |:---:|:---:|:---:|
-| <img src="docs/screenshots/main.png" width="250" alt="메인"> | <img src="docs/screenshots/settings.png" width="250" alt="설정"> | <img src="docs/screenshots/stats.png" width="250" alt="통계"> |
+| <img src="docs/screenshots/ko/ko_main.png" width="250" alt="메인"> | <img src="docs/screenshots/ko/ko_settings.png" width="250" alt="설정"> | <img src="docs/screenshots/ko/ko_stats.png" width="250" alt="통계"> |
+
+### 🖥️ 메뉴바 모습
+
+실행하면 맥 상단 메뉴바에 이렇게 떠 있습니다.
+
+| 오늘 0세션 (잠듦) | 오늘 집중함 (깨어남) | 집중·휴식 중 |
+|:---:|:---:|:---:|
+| <img src="docs/screenshots/bar/sleep.png" height="36" alt="잠든 펫"> | <img src="docs/screenshots/bar/wakeup.png" height="36" alt="깨어난 펫"> | <img src="docs/screenshots/bar/minutes.png" height="36" alt="남은 시간"> |
+
+> 오늘 한 번도 집중 안 하면 `(-.-)`로 잠들어 있다가, 한 세션이라도 하면 `(•ᴗ•)`로 깨어납니다. 집중·휴식 중엔 남은 시간이 표시돼요.
 
 ---
 
@@ -36,7 +46,7 @@ Pomopet은 좋아하는 캐릭터 이미지를 **픽셀로 변환**해 키우는
 - **🔥 연속 기록(스트릭)** — 매일 목표를 채우면 연속일이 쌓이고, 끊기면 리셋
 - **😴 활성/잠듦** — 오늘 목표 달성 시 캐릭터가 컬러로 깨어나 통통 튐 / 안 하면 흑백으로 잠듦
 - **🏅 마일스톤 아우라** — 연속 3일 BRONZE → 7일 SILVER → 30일 GOLD → 100일 DIAMOND 테두리
-- **🌱 활동 잔디(히트맵)** — 최근 35일 공부 기록을 한눈에
+- **🌱 활동 히트맵** — 월 달력으로 공부 기록을 한눈에 (월 이동 · 날짜 hover로 그날 상세)
 - **🎯 하루 목표** — 하루에 몇 세션을 채워야 "활성화"되는지 설정 (1~20)
 - **🍅 단순한 포모도로** — 집중 / 휴식 / 하루 목표 세 가지만 설정하면 끝
 - **🪶 가벼움** — Dock 아이콘 없이 메뉴바에만 존재. 모든 그래픽은 외부 이미지 없이 코드로 렌더링

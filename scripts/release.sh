@@ -34,6 +34,34 @@ if [[ "$CURRENT_BRANCH" != "$RELEASE_BRANCH" ]]; then
   exit 1
 fi
 
+# 0.7) CHANGELOG.md에서 이번 버전 릴리스 노트 추출 → GitHub Release 본문 + Sparkle appcast 설명에 사용.
+CHANGELOG="$ROOT/CHANGELOG.md"
+NOTES_MD="$(awk -v v="$VERSION" '
+  $0 ~ ("^## \\[" v "\\]") { grab=1; next }   # "## [1.3.0] - ..." 헤더에서 수집 시작
+  grab && /^## \[/ { exit }                    # 다음 버전 헤더에서 중단
+  grab { print }
+' "$CHANGELOG" 2>/dev/null | sed -e '/./,$!d')"   # 선행 빈 줄 제거
+if [[ -z "${NOTES_MD//[[:space:]]/}" ]]; then
+  echo "⚠︎ CHANGELOG.md에 '## [$VERSION]' 섹션이 없습니다 — 변경사항 없이 진행." >&2
+  NOTES_MD="- 자세한 변경사항은 커밋 로그를 참고하세요."
+fi
+
+# GitHub Release 본문: 변경사항(CHANGELOG) + 설치 안내
+INSTALL_NOTE="미서명 빌드입니다 — macOS Sequoia에선 '우클릭→열기'가 막혀, 첫 실행이 차단되면:
+\`xattr -dr com.apple.quarantine /Applications/Pomopet.app\`
+또는 시스템 설정 → 개인정보 보호 및 보안 → '그래도 열기'. (Homebrew 설치 시 불필요)"
+GH_NOTES="$(printf '## 변경사항\n\n%s\n\n---\n\n%s\n' "$NOTES_MD" "$INSTALL_NOTE")"
+
+# Sparkle appcast <description>용 HTML 변환 (### → 소제목, - → 목록 항목)
+NOTES_HTML="$(printf '%s\n' "$NOTES_MD" | awk '
+  BEGIN { inlist=0 }
+  /^### / { if (inlist) { print "</ul>"; inlist=0 } h=$0; sub(/^### /,"",h); print "<h4>" h "</h4>"; next }
+  /^- /   { if (!inlist) { print "<ul>"; inlist=1 } li=$0; sub(/^- /,"",li); print "<li>" li "</li>"; next }
+  /^[[:space:]]*$/ { next }
+  { print "<p>" $0 "</p>" }
+  END { if (inlist) print "</ul>" }
+')"
+
 # 1) DMG 빌드 + sha256 추출
 SHA="$(bash "$ROOT/scripts/package-dmg.sh" "$VERSION" | awk -F= '/^SHA256=/{print $2}')"
 if [[ -z "$SHA" || ! -f "$DMG_PATH" ]]; then
@@ -42,21 +70,18 @@ if [[ -z "$SHA" || ! -f "$DMG_PATH" ]]; then
 fi
 echo "sha256=$SHA"
 
-# 2) GitHub Release 생성 (없으면) + DMG 업로드
+# 2) GitHub Release 생성 (없으면) + DMG 업로드. 본문은 CHANGELOG 기반 변경사항 + 설치 안내.
 if gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1; then
-  echo "▶︎ 기존 릴리스 $TAG 에 자산 덮어쓰기…"
+  echo "▶︎ 기존 릴리스 $TAG 에 자산 덮어쓰기 + 노트 갱신…"
   gh release upload "$TAG" "$DMG_PATH" --repo "$REPO" --clobber
+  gh release edit "$TAG" --repo "$REPO" --title "$APP_NAME $VERSION" --notes "$GH_NOTES"
 else
   echo "▶︎ 릴리스 $TAG 생성…"
   gh release create "$TAG" "$DMG_PATH" \
     --repo "$REPO" \
     --target "$RELEASE_BRANCH" \
     --title "$APP_NAME $VERSION" \
-    --notes "내가 올린 캐릭터를 키우는 메뉴바 포모도로. 설치는 README 참고.
-
-미서명 빌드입니다 — macOS Sequoia에선 '우클릭→열기'가 막혀, 첫 실행이 차단되면:
-\`xattr -dr com.apple.quarantine /Applications/Pomopet.app\`
-또는 시스템 설정 → 개인정보 보호 및 보안 → '그래도 열기'. (Homebrew 설치 시 불필요)"
+    --notes "$GH_NOTES"
 fi
 
 # 2.5) Sparkle appcast 생성 → EdDSA 서명 → 릴리스 자산으로 업로드.
@@ -77,6 +102,9 @@ else
     <title>Pomopet</title>
     <item>
       <title>${VERSION}</title>
+      <description><![CDATA[
+${NOTES_HTML}
+      ]]></description>
       <pubDate>${PUBDATE}</pubDate>
       <sparkle:version>${VERSION}</sparkle:version>
       <sparkle:shortVersionString>${VERSION}</sparkle:shortVersionString>
