@@ -52,6 +52,37 @@ else
 \`xattr -dr com.apple.quarantine /Applications/Pomopet.app\`"
 fi
 
+# 2.5) Sparkle appcast 생성 → EdDSA 서명 → 릴리스 자산으로 업로드.
+#   SUFeedURL = releases/latest/download/appcast.xml (Info.plist). sign_update가 Keychain의 개인키로 서명.
+SIGN_TOOL="$(find "$ROOT/build/DerivedData" -path '*Sparkle*/bin/sign_update' ! -path '*old_dsa*' 2>/dev/null | head -1)"
+if [[ -z "$SIGN_TOOL" ]]; then
+  echo "⚠︎ sign_update 도구를 못 찾음(Sparkle 패키지 미resolve?). appcast 생략." >&2
+else
+  echo "▶︎ DMG EdDSA 서명 + appcast 생성…"
+  SIG_ATTRS="$("$SIGN_TOOL" "$DMG_PATH")"   # → sparkle:edSignature="…" length="…"  (최초 1회 Keychain 접근 허용 필요)
+  DMG_URL="https://github.com/${REPO}/releases/download/${TAG}/${APP_NAME}-${VERSION}.dmg"
+  PUBDATE="$(date -u '+%a, %d %b %Y %H:%M:%S +0000')"
+  APPCAST="$ROOT/dist/appcast.xml"
+  cat > "$APPCAST" <<XML
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+  <channel>
+    <title>Pomopet</title>
+    <item>
+      <title>${VERSION}</title>
+      <pubDate>${PUBDATE}</pubDate>
+      <sparkle:version>${VERSION}</sparkle:version>
+      <sparkle:shortVersionString>${VERSION}</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <enclosure url="${DMG_URL}" type="application/octet-stream" ${SIG_ATTRS} />
+    </item>
+  </channel>
+</rss>
+XML
+  gh release upload "$TAG" "$APPCAST" --repo "$REPO" --clobber
+  echo "✅ appcast 게시: https://github.com/${REPO}/releases/latest/download/appcast.xml"
+fi
+
 # 3) Homebrew cask 갱신 (탭 repo가 있을 때만)
 TAP_DIR="$(mktemp -d)"
 if gh repo clone "$TAP_REPO" "$TAP_DIR" -- -q 2>/dev/null; then
