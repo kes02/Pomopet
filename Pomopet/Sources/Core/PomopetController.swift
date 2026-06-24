@@ -4,13 +4,11 @@ import SwiftData
 import Combine
 import AppKit
 
-// MARK: - DayCell
-// 히트맵(잔디) 한 칸. 특정 날짜의 세션 수를 담습니다.
-struct DayCell: Identifiable {
-    let key: Int          // yyyyMMdd
+// MARK: - DayStat
+// 특정 날짜의 활동 기록(세션 수 + 집중 시간). 히트맵 월 달력 조회용.
+struct DayStat {
     let sessions: Int
-    let isToday: Bool
-    var id: Int { key }
+    let minutes: Int
 }
 
 // MARK: - PomopetController
@@ -29,7 +27,7 @@ final class PomopetController: ObservableObject {
     @Published private(set) var currentStreak = 0        // 현재 연속일
     @Published private(set) var bestStreak = 0           // 역대 최고 연속일
     @Published private(set) var isActiveToday = false    // 오늘 목표 달성(=활성화)
-    @Published private(set) var recentDays: [DayCell] = []  // 최근 35일 히트맵
+    @Published private(set) var dayStats: [Int: DayStat] = [:]  // 날짜키(yyyyMMdd) → 그날 기록 (히트맵용)
     @Published private(set) var totalFocusSessions = 0   // 누적 통계(표시용)
     @Published private(set) var totalFocusMinutes = 0
 
@@ -220,13 +218,12 @@ final class PomopetController: ObservableObject {
             totalFocusMinutes = stats.totalFocusMinutes
         }
 
-        // 최근 35일 히트맵 (과거 → 오늘 순)
-        recentDays = (0..<35).reversed().compactMap { offset in
-            guard let d = cal.date(byAdding: .day, value: -offset, to: today) else { return nil }
-            let key = Self.dayKey(for: d)
-            let sessions = records.first(where: { $0.dayKey == key })?.sessions ?? 0
-            return DayCell(key: key, sessions: sessions, isToday: key == todayKey)
+        // 히트맵용: 모든 날짜의 세션/집중시간 기록을 날짜키로 조회 가능하게
+        var map: [Int: DayStat] = [:]
+        for r in records {
+            map[r.dayKey] = DayStat(sessions: r.sessions, minutes: r.minutes)
         }
+        dayStats = map
 
         // activated 업그레이드·bestStreak 갱신을 영구 저장
         saveContext()
