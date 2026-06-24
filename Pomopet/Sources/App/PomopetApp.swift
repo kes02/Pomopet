@@ -52,15 +52,18 @@ struct MenuBarLabel: View {
 
     var body: some View {
         HStack(spacing: 4) {
-            // 펫 얼굴(깨어남/잠듦) — 메뉴바는 작으니 얼굴만
-            Text(controller.menuBarFace)
-                .font(.system(size: 12, weight: .medium, design: .monospaced))
             if controller.phase.isCountingDown {
+                // 집중·휴식 진행 중 — 표정 대신 남은 시간만
                 Text(controller.timeString)
                     .monospacedDigit()
-            } else if controller.isActiveToday && controller.currentStreak > 0 {
-                Text("\(controller.currentStreak)")
-                    .monospacedDigit()
+            } else {
+                // 유휴 — 오늘 세션 0=잠듦, ≥1=깨움
+                Text(controller.menuBarFace)
+                    .font(.system(size: 12, weight: .medium, design: .monospaced))
+                if controller.isActiveToday && controller.currentStreak > 0 {
+                    Text("\(controller.currentStreak)")
+                        .monospacedDigit()
+                }
             }
         }
     }
