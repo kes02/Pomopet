@@ -40,7 +40,7 @@ There are plenty of pet-raising Pomodoro apps. Pomopet differs in three ways.
 - **🎯 Daily goal** — Set how many sessions a day are needed to "activate" (1–20)
 - **🍅 Dead-simple Pomodoro** — Just three settings: focus / break / daily goal
 - **🪶 Lightweight** — Lives only in the menu bar (no Dock icon). All graphics are rendered in code, with no external images
-- **🔄 Update notice** — The app tells you when a new version is out (details in [Updates](#-updates))
+- **🔄 Auto-update** — Installs new versions in-app automatically (via [Sparkle](https://sparkle-project.org); details in [Updates](#-updates))
 - **🌐 Korean · English** — Follows your system language, or switch it yourself with a button in Settings
 
 ---
@@ -87,16 +87,12 @@ scripts/release.sh 1.2.3   # build DMG → upload GitHub Release → update Home
 
 ## 🔄 Updates
 
-Since it's an unsigned build, it **won't auto-install**, but it does let you know when a new version is available.
+**The app updates itself automatically** (powered by [Sparkle](https://sparkle-project.org) — download, install, and relaunch in one step).
 
-- **In-app notice** — Once a day Pomopet checks GitHub Releases; if there's a newer version, it shows a **"New version available"** banner at the top of the popover. Click **Update** to open the download page. (You can also check manually with the **Check for updates** button in Settings.)
-- **Homebrew users** — Get the latest with one line:
-  ```bash
-  brew upgrade --cask pomopet
-  ```
-- **DMG users** — Grab the new DMG from [Releases](https://github.com/kes02/Pomopet/releases) (opened from the notice) and reinstall. Your streak and stats are preserved.
+- **In-app auto-update** — When a new version is out, Pomopet notifies you and, with your consent, installs and relaunches right inside the app. You can also check manually with **Check for updates** in Settings.
+- **Homebrew users** — You can also update with `brew upgrade --cask pomopet`.
 
-> The in-app check only fetches version info (no personal data or usage is sent), and silently skips if there's no network.
+> Updates are verified with an EdDSA signature (tamper-proof even though the build is unsigned), and only version info is fetched (no personal data sent).
 
 ---
 
