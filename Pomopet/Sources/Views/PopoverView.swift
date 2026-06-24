@@ -5,7 +5,7 @@ import AppKit
 // 메뉴바 아이콘을 클릭했을 때 나타나는 메인 화면.
 struct PopoverView: View {
     @ObservedObject var controller: PomopetController
-    @ObservedObject var updateChecker: UpdateChecker
+    @ObservedObject var updater: UpdaterManager
     @ObservedObject var lang: LanguageManager
     @State private var showingStats = false
     @State private var showingSettings = false
@@ -14,14 +14,10 @@ struct PopoverView: View {
         VStack(spacing: 16) {
             header
 
-            if updateChecker.updateAvailable {
-                updateBanner
-            }
-
             if controller.needsCharacter {
                 CharacterUploadView(controller: controller)
             } else if showingSettings {
-                SettingsView(controller: controller, updateChecker: updateChecker, lang: lang)
+                SettingsView(controller: controller, updater: updater, lang: lang)
             } else if showingStats {
                 StatsView(controller: controller)
             } else {
@@ -67,34 +63,6 @@ struct PopoverView: View {
                 .help("설정")
             }
         }
-    }
-
-    // 새 버전 알림 배너: GitHub에 더 높은 버전이 올라오면 표시. 미서명이라 자동설치 대신 다운로드 페이지로 안내.
-    private var updateBanner: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "arrow.down.circle.fill")
-                .foregroundStyle(.blue)
-            VStack(alignment: .leading, spacing: 1) {
-                Text("새 버전 \(updateChecker.latestVersion ?? "") 있어요")
-                    .font(.caption).fontWeight(.semibold)
-                Text("눌러서 다운로드 페이지 열기")
-                    .font(.caption2).foregroundStyle(.secondary)
-            }
-            Spacer()
-            Button("업데이트") { updateChecker.openReleasePage() }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.small)
-            Button {
-                updateChecker.dismissCurrentNotice()
-            } label: {
-                Image(systemName: "xmark")
-            }
-            .buttonStyle(.plain)
-            .foregroundStyle(.secondary)
-            .help("이 버전 알림 닫기")
-        }
-        .padding(8)
-        .background(RoundedRectangle(cornerRadius: 8).fill(Color.blue.opacity(0.12)))
     }
 
     // 메인 화면: 캐릭터 + 스트릭/목표 + 타이머
