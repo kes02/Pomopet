@@ -19,9 +19,23 @@ struct PomopetApp: App {
 
     init() {
         do {
-            modelContainer = try ModelContainer(
-                for: DailyRecord.self, AppStats.self
-            )
+            // 전용 경로 필수: 기본 위치(공유 default.store)는 다른 앱이 덮어쓸 수 있음
+            let storeURL = try StoreLocation.prepare()
+            let config = ModelConfiguration(url: storeURL)
+            do {
+                modelContainer = try ModelContainer(
+                    for: DailyRecord.self, AppStats.self,
+                    configurations: config
+                )
+            } catch {
+                // store 손상 시 매 실행 크래시로 이어지지 않게: 손상 파일을
+                // .broken-*으로 치워두고(수동 복구용) 빈 store로 1회 재시도
+                StoreLocation.setAsideBrokenStore()
+                modelContainer = try ModelContainer(
+                    for: DailyRecord.self, AppStats.self,
+                    configurations: config
+                )
+            }
         } catch {
             fatalError("SwiftData 컨테이너 생성 실패: \(error)")
         }
