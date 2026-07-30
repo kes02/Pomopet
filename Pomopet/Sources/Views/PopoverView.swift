@@ -7,25 +7,39 @@ struct PopoverView: View {
     @ObservedObject var controller: PomopetController
     @ObservedObject var updater: UpdaterManager
     @ObservedObject var lang: LanguageManager
-    @State private var showingStats = false
-    @State private var showingSettings = false
+    @ObservedObject var friends: FriendStore
+    @ObservedObject var workWatcher: WorkAppWatcher
+    @State private var tab: Tab = .pet
+
+    enum Tab { case pet, stats, friends, settings }
 
     var body: some View {
         VStack(spacing: 16) {
             header
 
+            // 친구가 찔렀으면 어느 화면에 있든 위쪽에 알려줍니다.
+            if let nudge = friends.incomingNudge {
+                NudgeBanner(nudge: nudge) { friends.dismissNudge() }
+            }
+
             if controller.needsCharacter {
                 CharacterUploadView(controller: controller)
-            } else if showingSettings {
-                SettingsView(controller: controller, updater: updater, lang: lang)
-            } else if showingStats {
-                StatsView(controller: controller)
             } else {
-                mainContent
+                switch tab {
+                case .pet: mainContent
+                case .stats: StatsView(controller: controller)
+                case .friends: FriendsView(store: friends)
+                case .settings: SettingsView(controller: controller, updater: updater, lang: lang,
+                                            friends: friends, workWatcher: workWatcher)
+                }
             }
         }
         .padding(18)
         .frame(width: 280)
+        .onAppear {
+            // 팝오버를 열 때마다 친구 상태를 한 번 새로 받아옵니다.
+            Task { await friends.sync() }
+        }
     }
 
     // 상단 바: 제목 + 통계/설정 토글 (캐릭터 업로드 전에는 토글 숨김)
@@ -35,34 +49,24 @@ struct PopoverView: View {
                 .font(.headline)
             Spacer()
             if !controller.needsCharacter {
-                Button {
-                    showingStats = false
-                    showingSettings = false
-                } label: {
-                    Image(systemName: "pawprint.fill")
-                }
-                .buttonStyle(.plain)
-                .help("캐릭터")
-
-                Button {
-                    showingSettings = false
-                    showingStats.toggle()
-                } label: {
-                    Image(systemName: "chart.bar.fill")
-                }
-                .buttonStyle(.plain)
-                .help("통계")
-
-                Button {
-                    showingStats = false
-                    showingSettings.toggle()
-                } label: {
-                    Image(systemName: "gearshape.fill")
-                }
-                .buttonStyle(.plain)
-                .help("설정")
+                tabButton(.pet, icon: "pawprint.fill", help: "캐릭터")
+                tabButton(.stats, icon: "chart.bar.fill", help: "통계")
+                tabButton(.friends, icon: "person.2.fill", help: "친구")
+                tabButton(.settings, icon: "gearshape.fill", help: "설정")
             }
         }
+    }
+
+    // 상단 탭 버튼. 지금 보고 있는 탭은 진하게, 나머지는 흐리게.
+    private func tabButton(_ target: Tab, icon: String, help: LocalizedStringKey) -> some View {
+        Button {
+            tab = target
+        } label: {
+            Image(systemName: icon)
+                .foregroundStyle(tab == target ? Color.accentColor : Color.secondary)
+        }
+        .buttonStyle(.plain)
+        .help(help)
     }
 
     // 메인 화면: 캐릭터 + 스트릭/목표 + 타이머

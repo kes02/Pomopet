@@ -40,6 +40,20 @@ final class PomopetController: ObservableObject {
     /// 하루 목표 세션 수 (최소 1)
     var dailyGoal: Int { max(1, settings.dailyGoalSessions) }
 
+    /// 오늘 날짜 키(yyyyMMdd). 친구 연동에서 사용.
+    var todayDayKey: Int { Self.dayKey(for: Date()) }
+
+    /// 오늘 누적 집중 시간(분). 친구 연동에서 사용.
+    var todayMinutes: Int { dayStats[todayDayKey]?.minutes ?? 0 }
+
+    /// 진행 상황이나 타이머 단계가 바뀌면 알립니다.
+    /// 친구 연동이 켜져 있으면 이 신호로 서버에 즉시 반영합니다(꺼져 있으면 아무 일도 일어나지 않음).
+    var onProgressChanged: (() -> Void)?
+
+    /// 사용자가 직접 타이머를 멈춘 시각.
+    /// 작업 시작 감지가 방금 끈 타이머를 곧바로 다시 권하지 않도록 하는 데 씁니다.
+    private(set) var lastManualStop: Date?
+
     init() {
         self.settings = TimerSettings.load()
     }
@@ -73,6 +87,7 @@ final class PomopetController: ObservableObject {
     /// 첫 실행 등에서 키울 캐릭터 이미지를 등록합니다.
     func setCharacter(_ image: NSImage) {
         CustomPetStore.save(image)
+        PetMenuBarIcon.invalidate()   // 메뉴바 아이콘을 새 캐릭터로 다시 그리도록
         needsCharacter = false
         objectWillChange.send()
     }
@@ -80,6 +95,7 @@ final class PomopetController: ObservableObject {
     /// 캐릭터 이미지를 교체합니다 (스트릭/기록은 유지).
     func changeCharacter(_ image: NSImage) {
         CustomPetStore.save(image)
+        PetMenuBarIcon.invalidate()
         needsCharacter = false
         objectWillChange.send()
     }
@@ -90,24 +106,30 @@ final class PomopetController: ObservableObject {
         phase = .focusing
         remainingSeconds = settings.focusMinutes * 60
         startTicking()
+        onProgressChanged?()
     }
 
     func startBreak() {
         phase = .resting
         remainingSeconds = settings.breakMinutes * 60
         startTicking()
+        onProgressChanged?()
     }
 
     func stop() {
         stopTicking()
         phase = .idle
         remainingSeconds = 0
+        lastManualStop = Date()
+        onProgressChanged?()
     }
 
     func skipBreak() {
         stopTicking()
         phase = .idle
         remainingSeconds = 0
+        lastManualStop = Date()
+        onProgressChanged?()
     }
 
     // MARK: - 타이머 틱
@@ -227,6 +249,8 @@ final class PomopetController: ObservableObject {
 
         // activated 업그레이드·bestStreak 갱신을 영구 저장
         saveContext()
+
+        onProgressChanged?()
     }
 
     private static func dayKey(for date: Date) -> Int {
