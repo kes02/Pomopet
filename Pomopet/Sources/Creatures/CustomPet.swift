@@ -144,6 +144,44 @@ enum PetVisual {
         return ImagePixelizer.colorGrid(from: image, resolution: renderResolution)
     }
 
+    /// 투명한 여백을 잘라낸 격자.
+    ///
+    /// 업로드한 이미지는 캐릭터 주변에 빈 공간이 있는 경우가 많습니다. 큰 화면에서는 상관없지만
+    /// 노치처럼 좁은 자리에서는 그 여백까지 크기에 포함되어 캐릭터가 실제보다 작게 보입니다.
+    /// 비어 있는 바깥쪽 줄·칸을 걷어내서 캐릭터가 주어진 공간을 꽉 채우게 합니다.
+    static func trimmedGrid() -> [[Color?]]? {
+        guard let grid = grid(), !grid.isEmpty else { return nil }
+
+        var top = 0, bottom = grid.count - 1
+        while top <= bottom, grid[top].allSatisfy({ $0 == nil }) { top += 1 }
+        while bottom > top, grid[bottom].allSatisfy({ $0 == nil }) { bottom -= 1 }
+        guard top <= bottom else { return nil }
+
+        let width = grid.map(\.count).max() ?? 0
+        var left = 0, right = width - 1
+        func columnIsEmpty(_ c: Int) -> Bool {
+            grid[top...bottom].allSatisfy { row in c >= row.count || row[c] == nil }
+        }
+        while left <= right, columnIsEmpty(left) { left += 1 }
+        while right > left, columnIsEmpty(right) { right -= 1 }
+        guard left <= right else { return nil }
+
+        // 딱 맞게 자르면 캐릭터의 맨 바깥 픽셀(발끝 같은 것)이 프레임 경계에 붙어
+        // 잘린 것처럼 보입니다. 사방에 이만큼 숨 쉴 틈을 남깁니다.
+        let margin = 2
+
+        let trimmed = grid[top...bottom].map { row in
+            (left...right).map { c in c < row.count ? row[c] : nil }
+        }
+        let paddedWidth = trimmed[0].count + margin * 2
+        let blankRow = [Color?](repeating: nil, count: paddedWidth)
+        let side = [Color?](repeating: nil, count: margin)
+
+        return Array(repeating: blankRow, count: margin)
+            + trimmed.map { side + $0 + side }
+            + Array(repeating: blankRow, count: margin)
+    }
+
     /// 강조색(테두리·진행바 등) = 이미지 대표색.
     static func tint() -> Color {
         guard let image = CustomPetStore.loadImage() else { return .accentColor }

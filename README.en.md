@@ -51,6 +51,9 @@ Once it's running, it lives in your Mac's menu bar like this.
 - **🍅 Dead-simple Pomodoro** — Just three settings: focus / break / daily goal
 - **🪶 Lightweight** — Lives only in the menu bar (no Dock icon). All graphics are rendered in code, with no external images
 - **🔄 Auto-update** — Installs new versions in-app automatically (via [Sparkle](https://sparkle-project.org); details in [Updates](#-updates))
+- **👥 Grow together with friends** — Connect with a 6-character code to see whether your friends' pets are awake, and poke the sleeping ones. Off by default ([what is shared](#-friends-and-privacy))
+- **▶️ Work app detection** — Opens Xcode or VS Code? Pomopet asks "Start a focus session?"
+- **☕ Away detection** — If there's no input for 5 minutes during a session, Pomopet asks whether to stop, so idle time doesn't inflate your record
 - **🌐 Korean · English** — Follows your system language, or switch it yourself with a button in Settings
 
 ---
@@ -129,6 +132,36 @@ scripts/release.sh 1.2.3   # build DMG → upload GitHub Release → update Home
 - **Language** — Switch between 한국어 / English instantly
 
 > Even if you change the daily goal midway, if you've already met it today your character won't sleep and your streak stays.
+
+
+---
+
+## 👥 Friends and privacy
+
+Friend sync is **off by default.** Nothing is sent anywhere until you turn it on.
+
+Turning it on creates an anonymous account and gives you a 6-character code. No email, no password, no social login.
+
+**What goes up**
+
+| Item | Example |
+|---|---|
+| Name | Display only, typed by you |
+| Today's focus minutes / sessions / goal | `75`, `3`, `5` |
+| Whether the pet woke up / streak | `true`, `12` |
+| Whether you're focusing right now | `focusing` |
+| Pet image | 26×26 PNG, only when it changes |
+
+**What never goes up**
+
+- Timestamped records of what you did when
+- Which apps you opened — work app detection runs entirely on your Mac
+- Friend groups — stored only on this Mac
+- Raw IP addresses — used only to throttle signups, hashed and deleted after a day
+
+The server lives in [`server/`](server/) in this repo. If you'd rather not trust mine, **run your own** and point the app at it. See [server/README.md](server/README.md).
+
+> All the app receives from the server is numbers and one PNG. There is no path for it to receive and execute code, so even a fully compromised server cannot run anything on your Mac.
 
 ---
 
