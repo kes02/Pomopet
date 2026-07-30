@@ -75,21 +75,39 @@ struct HeatmapView: View {
         return c
     }
 
-    // 월 이동 헤더
+    // 월 이동 헤더 + 그 달에 집중한 총 시간
     private func header(cal: Calendar, monthStart: Date) -> some View {
-        HStack {
-            Button { monthOffset -= 1 } label: { Image(systemName: "chevron.left") }
-                .buttonStyle(.plain)
-            Spacer()
-            Text(monthTitle(cal: cal, monthStart: monthStart))
-                .font(.callout).fontWeight(.semibold)
-            Spacer()
-            Button { monthOffset += 1 } label: { Image(systemName: "chevron.right") }
-                .buttonStyle(.plain)
-                .disabled(monthOffset >= 0)              // 미래 달로는 이동 불가
-                .opacity(monthOffset >= 0 ? 0.25 : 1)
+        VStack(spacing: 2) {
+            HStack {
+                Button { monthOffset -= 1 } label: { Image(systemName: "chevron.left") }
+                    .buttonStyle(.plain)
+                Spacer()
+                Text(monthTitle(cal: cal, monthStart: monthStart))
+                    .font(.callout).fontWeight(.semibold)
+                Spacer()
+                Button { monthOffset += 1 } label: { Image(systemName: "chevron.right") }
+                    .buttonStyle(.plain)
+                    .disabled(monthOffset >= 0)              // 미래 달로는 이동 불가
+                    .opacity(monthOffset >= 0 ? 0.25 : 1)
+            }
+            .font(.caption)
+
+            Text(focusMinutesLabel(monthMinutes(cal: cal, monthStart: monthStart)))
+                .font(.caption2)
+                .monospacedDigit()
+                .foregroundStyle(.secondary)
         }
-        .font(.caption)
+    }
+
+    /// 화면에 보이는 달의 집중 시간 합계(분).
+    /// 날짜키가 yyyyMMdd 정수라 그 달의 범위(yyyyMM00 ~ yyyyMM99)만 걸러 더하면 됩니다.
+    private func monthMinutes(cal: Calendar, monthStart: Date) -> Int {
+        let comps = cal.dateComponents([.year, .month], from: monthStart)
+        let base = (comps.year ?? 0) * 10000 + (comps.month ?? 0) * 100
+        return dayStats
+            .filter { $0.key > base && $0.key <= base + 99 }
+            .values
+            .reduce(0) { $0 + $1.minutes }
     }
 
     // 요일 머리글
@@ -268,15 +286,23 @@ struct SettingsView: View {
     @ObservedObject var controller: PomopetController
     @ObservedObject var updater: UpdaterManager
     @ObservedObject var lang: LanguageManager
+    @ObservedObject var friends: FriendStore
+    @ObservedObject var workWatcher: WorkAppWatcher
     @State private var focus: Double
     @State private var breakV: Double
     @State private var dailyGoal: Double
     @State private var didSave = false
+    @State private var confirmDisconnect = false
+    @State private var confirmingAppRemoval: String?   // 지울지 물어보는 중인 앱의 bundleID
+    @State private var confirmingRotate = false
 
-    init(controller: PomopetController, updater: UpdaterManager, lang: LanguageManager) {
+    init(controller: PomopetController, updater: UpdaterManager, lang: LanguageManager,
+         friends: FriendStore, workWatcher: WorkAppWatcher) {
         self.controller = controller
         self.updater = updater
         self.lang = lang
+        self.friends = friends
+        self.workWatcher = workWatcher
         _focus = State(initialValue: Double(controller.settings.focusMinutes))
         _breakV = State(initialValue: Double(controller.settings.breakMinutes))
         _dailyGoal = State(initialValue: Double(controller.settings.dailyGoalSessions))
@@ -327,6 +353,10 @@ struct SettingsView: View {
 
             Divider()
 
+            autoStartRow
+
+            if friends.isConnected { friendRow }
+
             languageRow
 
             updateRow
@@ -337,6 +367,130 @@ struct SettingsView: View {
             .buttonStyle(.plain)
             .foregroundStyle(.secondary)
             .font(.caption)
+        }
+    }
+
+    // 작업 앱을 켜면 집중 시작을 권하는 기능. 마음대로 시작하지 않고 물어보기만 합니다.
+    private var autoStartRow: some View {
+        VStack(spacing: 6) {
+            Toggle(isOn: Binding(
+                get: { workWatcher.settings.enabled },
+                set: { workWatcher.settings.enabled = $0 }
+            )) {
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("작업 시작하면 물어보기").font(.callout)
+                    Text("정해둔 앱을 켜면 집중 시작을 권해요")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .toggleStyle(.switch)
+            .controlSize(.mini)
+
+            if workWatcher.settings.enabled {
+                VStack(spacing: 4) {
+                    ForEach(workWatcher.settings.apps) { app in
+                        HStack(spacing: 6) {
+                            if let icon = app.icon {
+                                Image(nsImage: icon).resizable().frame(width: 14, height: 14)
+                            }
+                            Text(verbatim: app.name).font(.caption)
+                            Spacer()
+                            if confirmingAppRemoval == app.bundleID {
+                                Text("뺄까요?")
+                                    .font(.system(size: 9))
+                                    .foregroundStyle(.secondary)
+                                Button("빼기") {
+                                    workWatcher.settings.apps.removeAll { $0.bundleID == app.bundleID }
+                                    confirmingAppRemoval = nil
+                                }
+                                .buttonStyle(.borderedProminent)
+                                .controlSize(.mini)
+                                .tint(.red)
+                                Button {
+                                    confirmingAppRemoval = nil
+                                } label: {
+                                    Image(systemName: "xmark").font(.system(size: 8))
+                                }
+                                .buttonStyle(.plain)
+                                .foregroundStyle(.secondary)
+                            } else {
+                                Button {
+                                    confirmingAppRemoval = app.bundleID
+                                } label: {
+                                    Image(systemName: "xmark").font(.system(size: 8))
+                                }
+                                .buttonStyle(.plain)
+                                .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+
+                    Button {
+                        if let picked = pickApplication(),
+                           !workWatcher.settings.apps.contains(where: { $0.bundleID == picked.bundleID }) {
+                            workWatcher.settings.apps.append(picked)
+                        }
+                    } label: {
+                        Label("작업 앱 추가", systemImage: "plus")
+                            .font(.caption)
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+
+                    if workWatcher.settings.apps.isEmpty {
+                        Text("Xcode, VS Code처럼 작업할 때 켜는 앱을 골라주세요")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
+        }
+    }
+
+    // 친구 연동을 켠 뒤의 관리 항목 — 코드 재발급과 연동 끄기.
+    private var friendRow: some View {
+        VStack(spacing: 6) {
+            HStack {
+                Text("친구 연동").font(.caption).foregroundStyle(.secondary)
+                Spacer()
+                Text(verbatim: friends.myCode ?? "")
+                    .font(.system(size: 11, weight: .bold, design: .monospaced))
+                    .foregroundStyle(.secondary)
+            }
+
+            HStack(spacing: 6) {
+                // 예전 코드는 되살릴 수 없어서 한 번 더 물어봅니다.
+                Button(confirmingRotate ? "정말 바꿀까요?" : "코드 새로 받기") {
+                    if confirmingRotate {
+                        Task { await friends.rotateCode() }
+                        confirmingRotate = false
+                    } else {
+                        confirmingRotate = true
+                    }
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .help("예전 코드는 못 쓰게 됩니다. 이미 연결된 친구는 그대로예요")
+
+                Spacer()
+
+                Button(confirmDisconnect ? "정말 끌까요?" : "연동 끄기", role: .destructive) {
+                    if confirmDisconnect {
+                        Task { await friends.disconnect() }
+                        confirmDisconnect = false
+                    } else {
+                        confirmDisconnect = true
+                    }
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .help("서버에서 내 기록과 친구 관계를 지워요. 내 맥의 기록은 그대로예요")
+            }
         }
     }
 
