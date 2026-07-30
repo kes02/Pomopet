@@ -1,0 +1,25 @@
+{
+  "name": "pomopet-sync",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pomopet 친구 연동 서버 (Cloudflare Workers + D1)",
+  "scripts": {
+    "dev": "wrangler dev --test-scheduled",
+    "deploy": "wrangler deploy",
+    "db:create": "wrangler d1 create pomopet-sync",
+    "db:local": "wrangler d1 execute pomopet-sync --local --file=./schema.sql",
+    "db:reset": "wrangler d1 execute pomopet-sync --local --file=./reset.sql && wrangler d1 execute pomopet-sync --local --file=./schema.sql",
+    "db:remote": "wrangler d1 execute pomopet-sync --remote --file=./schema.sql",
+    "pretest": "npm run db:reset",
+    "test": "node test.mjs",
+    "db:migrate": "wrangler d1 execute pomopet-sync --remote --file=./migrations/0001_privacy_and_limits.sql"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260722.1",
+    "wrangler": "^4.115.0"
+  },
+  "allowScripts": {
+    "esbuild@0.28.1": true,
+    "workerd@1.20260722.1": true
+  }
+}

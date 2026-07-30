@@ -1,0 +1,17 @@
+name = "pomopet-sync"
+main = "src/index.ts"
+compatibility_date = "2026-07-01"
+
+# 직접 띄우는 경우 `npm run db:create` 로 새로 만든 뒤 출력된 database_id 로 바꾸세요.
+# (database_id 는 비밀값이 아닙니다. 이 DB 에 접근하려면 계정 권한이 따로 필요합니다.)
+[[d1_databases]]
+binding = "DB"
+database_name = "pomopet-sync"
+database_id = "8ad1c85c-75ce-46a0-95c8-33b8a66a2814"
+
+# 매일 UTC 04:00 (한국 시간 13:00) 에 휴면 계정을 정리합니다.
+[triggers]
+crons = ["0 4 * * *"]
+
+[observability]
+enabled = true
