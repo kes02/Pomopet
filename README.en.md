@@ -24,9 +24,9 @@ There are plenty of pet-raising Pomodoro apps. Pomopet differs in three ways.
 
 ## 📸 Screenshots
 
-| Character (active) | Settings | Stats · Heatmap |
-|:---:|:---:|:---:|
-| <img src="docs/screenshots/en/en_main.png" width="250" alt="Main"> | <img src="docs/screenshots/en/en_settings.png" width="250" alt="Settings"> | <img src="docs/screenshots/en/en_stats.png" width="250" alt="Stats"> |
+| Character (awake) | Friends | Stats · heatmap | Settings |
+|:---:|:---:|:---:|:---:|
+| <img src="docs/screenshots/en/en_main.png" width="220" alt="Main"> | <img src="docs/screenshots/en/en_friends.png" width="220" alt="Friends"> | <img src="docs/screenshots/en/en_stats.png" width="220" alt="Stats"> | <img src="docs/screenshots/en/en_settings.png" width="220" alt="Settings"> |
 
 ### 🖥️ In the menu bar
 
@@ -43,6 +43,7 @@ Once it's running, it lives in your Mac's menu bar like this.
 ## ✨ Features
 
 - **🖼️ Upload your own character** — Drop in a favorite image and it's converted to pixel art for your pet
+- **👀 Preview before you commit** — See how your photo looks as dots and in the menu bar first. Photos with a background can have it **removed automatically**
 - **🔥 Streak** — Focus on any given day to keep the streak; skip a day and it resets
 - **😴 Awake / Asleep** — Meet today's goal and your character wakes up in color and bounces; otherwise it sleeps in grayscale
 - **🏅 Milestone aura** — A glowing border: 3-day streak BRONZE → 7 SILVER → 30 GOLD → 100 DIAMOND
@@ -51,7 +52,7 @@ Once it's running, it lives in your Mac's menu bar like this.
 - **🪶 Lightweight** — Lives only in the menu bar (no Dock icon). All graphics are rendered in code, with no external images
 - **🔄 Auto-update** — Installs new versions in-app automatically (via [Sparkle](https://sparkle-project.org); details in [Updates](#-updates))
 - **👥 Grow together with friends** — Connect with a 6-character code to see whether your friends' pets are awake, and poke the sleeping ones. Off by default ([what is shared](#-friends-and-privacy))
-- **▶️ Work app detection** — Open Xcode or VS Code and focus starts 3 seconds later (with time to decline)
+- **▶️ Work app detection** — Open Xcode or VS Code and focus starts 3 seconds later (with time to decline). It also notices when you're already working in one
 - **☕ Away detection** — If there's no input for 5 minutes during a session, Pomopet asks whether to stop, so idle time doesn't inflate your record
 - **🌐 Korean · English** — Follows your system language, or switch it yourself with a button in Settings
 
@@ -166,18 +167,29 @@ The server lives in [`server/`](server/) in this repo. If you'd rather not trust
 
 ## 🛠️ Tech stack
 
-- **SwiftUI** · `MenuBarExtra` (menu-bar-only app)
+- **SwiftUI** · `MenuBarExtra` (menu-bar-only app, no Dock icon)
 - **SwiftData** — persists daily records and stats
 - **Canvas** — pixel rendering without external images (`ImagePixelizer` converts an uploaded image into a color grid)
+- **Sparkle** — in-app auto updates (EdDSA signature verification)
+- **NSWorkspace** — work app detection (no permissions needed)
+- **Vision** — removes the background from uploaded photos. Built into macOS, so it adds no app size and runs entirely on your Mac
+- **Cloudflare Workers + D1** — friend sync server ([`server/`](server/), optional)
 
 ### Project structure
 ```
 Pomopet/Sources/
-├─ App/        App entry point (PomopetApp, menu bar label)
-├─ Core/       Timer/streak logic (PomopetController), settings (TimerSettings), update check (UpdateChecker)
-├─ Models/     SwiftData models (DailyRecord, AppStats)
-├─ Creatures/  Pixel rendering (CustomPet, CharacterView)
-└─ Views/      Screens (PopoverView, Stats/Settings)
+├─ App/         App entry point (PomopetApp, menu bar label)
+├─ Core/        Timer/streak (PomopetController), settings (TimerSettings),
+│               store location (StoreLocation), language switching (Localization),
+│               auto updates (UpdaterManager)
+│   ├─ Friends/   Friend sync — networking, identity, pet cache, groups (off by default)
+│   └─ AutoStart/ Work app detection (WorkAppWatcher), away detection (IdleWatcher)
+├─ Models/      SwiftData models (DailyRecord, AppStats)
+├─ Creatures/   Pixel rendering (CustomPet, CharacterView, PetMenuBarIcon),
+│               background removal (BackgroundRemover)
+└─ Views/       Screens (Popover, Stats/Settings, Friends, upload preview, prompt cards)
+
+server/         Friend sync server (Cloudflare Workers + D1)
 ```
 
 ---
