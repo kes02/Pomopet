@@ -262,8 +262,27 @@ struct StreakTier {
 // 첫 실행: 키울 캐릭터 이미지를 올리는 화면.
 struct CharacterUploadView: View {
     @ObservedObject var controller: PomopetController
+    @State private var pending: NSImage?
 
     var body: some View {
+        if let pending {
+            CharacterPreview(
+                image: pending,
+                onConfirm: { final in
+                    controller.setCharacter(final)
+                    self.pending = nil
+                },
+                onRetry: { self.pending = pickImageFile() ?? pending }
+            )
+            // 다른 이미지를 고르면 미리보기를 새로 시작합니다.
+            // 이게 없으면 SwiftUI 가 같은 뷰를 재사용해, 앞서 배경을 지운 결과가 그대로 남습니다.
+            .id(ObjectIdentifier(pending))
+        } else {
+            picker
+        }
+    }
+
+    private var picker: some View {
         VStack(spacing: 14) {
             Image(systemName: "photo.badge.plus")
                 .font(.system(size: 40))
@@ -278,9 +297,7 @@ struct CharacterUploadView: View {
                 .multilineTextAlignment(.center)
 
             Button {
-                if let image = pickImageFile() {
-                    controller.setCharacter(image)
-                }
+                pending = pickImageFile()
             } label: {
                 Label("이미지 선택", systemImage: "photo")
                     .frame(maxWidth: .infinity)

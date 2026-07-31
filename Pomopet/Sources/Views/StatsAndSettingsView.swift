@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 // MARK: - StatsView
 // 누적 통계 + 연속 기록 + 최근 활동 히트맵(잔디).
@@ -291,6 +292,7 @@ struct SettingsView: View {
     @State private var didSave = false
     @State private var saveMessageToken = 0
     @State private var confirmingAppRemoval: String?   // 지울지 물어보는 중인 앱의 bundleID
+    @State private var pendingCharacter: NSImage?      // 미리보기 중인 새 캐릭터
 
     init(controller: PomopetController, updater: UpdaterManager, lang: LanguageManager,
          workWatcher: WorkAppWatcher) {
@@ -374,25 +376,37 @@ struct SettingsView: View {
     }
 
     // 캐릭터 — 고르는 즉시 바뀌므로 따로 저장할 게 없습니다.
+    @ViewBuilder
     private var characterSection: some View {
         VStack(spacing: 6) {
             sectionTitle("캐릭터")
 
-            Button {
-                if let image = pickImageFile() {
-                    controller.changeCharacter(image)
+            if let pending = pendingCharacter {
+                CharacterPreview(
+                    image: pending,
+                    onConfirm: { final in
+                        controller.changeCharacter(final)
+                        pendingCharacter = nil
+                    },
+                    onRetry: { pendingCharacter = pickImageFile() ?? pending }
+                )
+                // 다른 이미지를 고르면 미리보기를 새로 시작합니다.
+                .id(ObjectIdentifier(pending))
+            } else {
+                Button {
+                    pendingCharacter = pickImageFile()
+                } label: {
+                    Label("캐릭터 바꾸기", systemImage: "photo")
+                        .frame(maxWidth: .infinity)
                 }
-            } label: {
-                Label("캐릭터 바꾸기", systemImage: "photo")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.bordered)
-            .controlSize(.small)
+                .buttonStyle(.bordered)
+                .controlSize(.small)
 
-            Text("바꿔도 연속 기록과 집중 시간은 그대로예요")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                Text("바꿔도 연속 기록과 집중 시간은 그대로예요")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
         }
     }
 
