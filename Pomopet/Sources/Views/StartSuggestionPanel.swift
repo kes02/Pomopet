@@ -19,26 +19,26 @@ final class StartSuggestionPresenter {
     /// 대답 없이 저절로 사라졌을 때 알립니다.
     private var onIgnore: (() -> Void)?
 
-    // MARK: 집중 시작 권하기
+    // MARK: 집중 시작 — 거절하지 않으면 자동으로 시작
 
+    /// 일일이 시작을 누르는 게 번거로워서 기본값을 뒤집었습니다.
+    /// 카운트다운이 끝날 때까지 "나중에" 를 누르지 않으면 그대로 시작합니다.
     func show(
         appName: String,
+        countdown: Int,
         onStart: @escaping () -> Void,
-        onLater: @escaping () -> Void,
-        onIgnore: @escaping () -> Void
+        onLater: @escaping () -> Void
     ) {
         present(
-            visibleSeconds: 12,
-            onIgnore: onIgnore,
+            // 카운트다운이 끝나면 카드가 스스로 시작시키므로 따로 사라질 시간은 넉넉히 둡니다.
+            visibleSeconds: UInt64(countdown + 10),
+            onIgnore: {},
             card: { dismiss in
-                AnyView(PromptCard(
-                    title: "집중 시작할까요?",
-                    subtitle: "\(appName)을(를) 켰네요",
-                    primary: "시작",
-                    primaryIcon: "play.fill",
-                    secondary: "나중에",
-                    onPrimary: { onStart(); dismiss() },
-                    onSecondary: { onLater(); dismiss() }
+                AnyView(StartCountdownCard(
+                    appName: appName,
+                    seconds: countdown,
+                    onStart: { onStart(); dismiss() },
+                    onLater: { onLater(); dismiss() }
                 ))
             }
         )
@@ -134,6 +134,76 @@ final class StartSuggestionPresenter {
             y: screen.visibleFrame.maxY - frame.height - 8
         )
         panel.setFrameOrigin(origin)
+    }
+}
+
+// MARK: - 집중 시작 카드 (카운트다운)
+//
+// 가만히 두면 시작합니다. 멈추려면 "나중에" 를 눌러야 합니다.
+struct StartCountdownCard: View {
+    let appName: String
+    let seconds: Int
+    let onStart: () -> Void
+    let onLater: () -> Void
+
+    @State private var remaining: Int
+
+    init(appName: String, seconds: Int, onStart: @escaping () -> Void, onLater: @escaping () -> Void) {
+        self.appName = appName
+        self.seconds = seconds
+        self.onStart = onStart
+        self.onLater = onLater
+        _remaining = State(initialValue: seconds)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                CharacterView(grid: PetVisual.grid() ?? [], tint: PetVisual.tint(), active: true, size: 28)
+
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("\(remaining)초 뒤 집중 시작")
+                        .font(.system(size: 13, weight: .semibold))
+                        .monospacedDigit()
+                    Text("\(appName)을(를) 켰네요")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+            }
+
+            HStack(spacing: 6) {
+                Button(action: onStart) {
+                    Label("지금 시작", systemImage: "play.fill")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.small)
+
+                Button("나중에", action: onLater)
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+            }
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(.regularMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .strokeBorder(Color.primary.opacity(0.12), lineWidth: 1)
+                )
+        )
+        .frame(width: 260)
+        .task {
+            // 카드가 사라지면(= 사용자가 눌렀으면) 이 작업도 취소되어 자동 시작이 일어나지 않습니다.
+            for _ in 0..<seconds {
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
+                if Task.isCancelled { return }
+                remaining -= 1
+            }
+            if !Task.isCancelled { onStart() }
+        }
     }
 }
 
