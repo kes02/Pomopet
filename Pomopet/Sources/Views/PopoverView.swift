@@ -30,7 +30,7 @@ struct PopoverView: View {
                 case .stats: StatsView(controller: controller)
                 case .friends: FriendsView(store: friends)
                 case .settings: SettingsView(controller: controller, updater: updater, lang: lang,
-                                            friends: friends, workWatcher: workWatcher)
+                                            workWatcher: workWatcher)
                 }
             }
         }
@@ -74,21 +74,16 @@ struct PopoverView: View {
         VStack(spacing: 14) {
             characterScreen
 
-            // 지표 행: 연속 / 오늘 / 최고
+            // 지표 행: 연속 / 오늘 집중 시간 / 최고
             HStack(spacing: 8) {
                 metric(title: "🔥 연속", value: "\(controller.currentStreak)일")
-                metric(title: "오늘", value: "\(controller.todaySessions)/\(controller.dailyGoal)")
+                metric(title: "오늘", value: focusMinutesLabel(controller.todayMinutes))
                 metric(title: "최고", value: "\(controller.bestStreak)일")
             }
 
-            // 일일 목표 진행바
-            VStack(spacing: 4) {
-                ProgressView(value: goalProgress)
-                    .tint(controller.isActiveToday ? PetVisual.tint() : .gray)
-                Text(goalCaption)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-            }
+            Text(todayCaption)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
 
             Divider()
 
@@ -171,16 +166,10 @@ struct PopoverView: View {
         .frame(maxWidth: .infinity)
     }
 
-    private var goalProgress: Double {
-        min(1.0, Double(controller.todaySessions) / Double(controller.dailyGoal))
-    }
-
-    private var goalCaption: LocalizedStringKey {
-        if controller.isActiveToday {
-            return "오늘 목표 달성! 연속 유지 중 🔥"
-        }
-        let left = max(0, controller.dailyGoal - controller.todaySessions)
-        return "오늘 \(left)세션 더 하면 깨어나요"
+    private var todayCaption: LocalizedStringKey {
+        controller.isActiveToday
+            ? "오늘도 집중했어요! 연속 유지 중 🔥"
+            : "오늘 집중하면 펫이 깨어나요"
     }
 
     // 타이머 영역: 현재 단계에 따라 다른 버튼/표시

@@ -10,6 +10,8 @@ struct FriendsView: View {
     @State private var didCopy = false
     @State private var didRename = false
     @State private var addingGroup = false
+    @State private var confirmingRotate = false
+    @State private var confirmingDisconnect = false
     @State private var newGroupName = ""
     @FocusState private var nameFocused: Bool
 
@@ -23,6 +25,9 @@ struct FriendsView: View {
                 myNameRow
                 myCodeRow
                 addFriendRow
+
+                Divider()
+                disconnectRow
             } else {
                 intro
             }
@@ -295,8 +300,6 @@ struct FriendsView: View {
                 .font(.system(size: 14, weight: .bold, design: .monospaced))
                 .textSelection(.enabled)
 
-            Spacer()
-
             Button {
                 NSPasteboard.general.clearContents()
                 NSPasteboard.general.setString(store.myCode ?? "", forType: .string)
@@ -311,6 +314,83 @@ struct FriendsView: View {
             .buttonStyle(.plain)
             .foregroundStyle(didCopy ? .green : .secondary)
             .help("코드 복사")
+
+            Spacer()
+
+            // 코드 줄에 딸린 동작이라 같은 줄 오른쪽 끝에 둡니다.
+            // 예전 코드는 되살릴 수 없어서 한 번 더 물어봅니다.
+            Button(confirmingRotate ? "정말 바꿀까요?" : "코드 새로 받기") {
+                if confirmingRotate {
+                    Task { await store.rotateCode() }
+                    confirmingRotate = false
+                } else {
+                    confirmingRotate = true
+                }
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+            .help("예전 코드는 못 쓰게 됩니다. 이미 연결된 친구는 그대로예요")
+        }
+    }
+
+    // MARK: 연동 끄기
+    // 되돌릴 수 없는 동작이라 맨 아래에 두고 한 번 더 물어봅니다.
+
+    private var disconnectRow: some View {
+        VStack(spacing: 6) {
+            HStack(spacing: 6) {
+                Text("친구 연동")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(.secondary)
+
+                // 멈춘 상태는 버튼 글씨만으로는 놓치기 쉬워서 표시를 남겨둡니다.
+                if store.isPaused {
+                    Text("멈춤")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(.orange)
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 1)
+                        .background(Capsule().fill(.orange.opacity(0.18)))
+                }
+
+                Spacer()
+
+                // 되돌릴 수 있는 쪽(멈추기)을 먼저, 되돌릴 수 없는 쪽(끄기)을 오른쪽 끝에.
+                Button(store.isPaused ? "다시 시작" : "잠시 멈추기") {
+                    store.setPaused(!store.isPaused)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .help("계정과 친구는 그대로 두고 주고받기만 쉽니다")
+
+                Button(confirmingDisconnect ? "정말 끌까요?" : "연동 끄기", role: .destructive) {
+                    if confirmingDisconnect {
+                        Task { await store.disconnect() }
+                        confirmingDisconnect = false
+                    } else {
+                        confirmingDisconnect = true
+                    }
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .tint(.red)
+            }
+
+            if store.isPaused {
+                Text("친구에게 내 상태가 올라가지 않고, 친구 목록도 갱신되지 않아요")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            if confirmingDisconnect {
+                Text("친구 목록에서도 사라지고 코드가 바뀝니다. 되돌릴 수 없어요")
+                    .font(.caption2)
+                    .foregroundStyle(.red.opacity(0.85))
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
     }
 

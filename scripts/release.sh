@@ -52,13 +52,25 @@ INSTALL_NOTE="미서명 빌드입니다 — macOS Sequoia에선 '우클릭→열
 또는 시스템 설정 → 개인정보 보호 및 보안 → '그래도 열기'. (Homebrew 설치 시 불필요)"
 GH_NOTES="$(printf '## 변경사항\n\n%s\n\n---\n\n%s\n' "$NOTES_MD" "$INSTALL_NOTE")"
 
-# Sparkle appcast <description>용 HTML 변환 (### → 소제목, - → 목록 항목)
+# Sparkle appcast <description>용 HTML 변환
+# (### → 소제목, - → 목록 항목, **굵게** → <strong>, `코드` → <code>)
 NOTES_HTML="$(printf '%s\n' "$NOTES_MD" | awk '
   BEGIN { inlist=0 }
-  /^### / { if (inlist) { print "</ul>"; inlist=0 } h=$0; sub(/^### /,"",h); print "<h4>" h "</h4>"; next }
-  /^- /   { if (!inlist) { print "<ul>"; inlist=1 } li=$0; sub(/^- /,"",li); print "<li>" li "</li>"; next }
+  function md(t) {
+    while (match(t, /\*\*[^*]+\*\*/)) {
+      inner = substr(t, RSTART + 2, RLENGTH - 4)
+      t = substr(t, 1, RSTART - 1) "<strong>" inner "</strong>" substr(t, RSTART + RLENGTH)
+    }
+    while (match(t, /`[^`]+`/)) {
+      inner = substr(t, RSTART + 1, RLENGTH - 2)
+      t = substr(t, 1, RSTART - 1) "<code>" inner "</code>" substr(t, RSTART + RLENGTH)
+    }
+    return t
+  }
+  /^### / { if (inlist) { print "</ul>"; inlist=0 } h=$0; sub(/^### /,"",h); print "<h4>" md(h) "</h4>"; next }
+  /^- /   { if (!inlist) { print "<ul>"; inlist=1 } li=$0; sub(/^- /,"",li); print "<li>" md(li) "</li>"; next }
   /^[[:space:]]*$/ { next }
-  { print "<p>" $0 "</p>" }
+  { print "<p>" md($0) "</p>" }
   END { if (inlist) print "</ul>" }
 ')"
 
@@ -93,7 +105,9 @@ else
   echo "▶︎ DMG EdDSA 서명 + appcast 생성…"
   SIG_ATTRS="$("$SIGN_TOOL" "$DMG_PATH")"   # → sparkle:edSignature="…" length="…"  (최초 1회 Keychain 접근 허용 필요)
   DMG_URL="https://github.com/${REPO}/releases/download/${TAG}/${APP_NAME}-${VERSION}.dmg"
-  PUBDATE="$(date -u '+%a, %d %b %Y %H:%M:%S +0000')"
+  # RFC 822 형식은 영문 요일·월 이름을 요구한다. 시스템 로케일이 한국어면
+  # "목, 30  7월 2026" 처럼 나가므로 LC_TIME을 고정한다.
+  PUBDATE="$(LC_ALL=C date -u '+%a, %d %b %Y %H:%M:%S +0000')"
   APPCAST="$ROOT/dist/appcast.xml"
   cat > "$APPCAST" <<XML
 <?xml version="1.0" encoding="utf-8"?>

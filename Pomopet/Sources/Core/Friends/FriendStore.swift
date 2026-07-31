@@ -22,6 +22,8 @@ final class FriendStore: ObservableObject {
     @Published private(set) var myStatus: FriendSummary?
     /// 친구 그룹 — 이 맥에만 저장되고 서버로는 가지 않습니다.
     @Published private(set) var groups: [FriendGroup] = []
+    /// 동기화를 잠시 멈춘 상태. 계정·친구 관계는 그대로 두고 주고받기만 쉽니다.
+    @Published private(set) var isPaused = false
     @Published private(set) var isBusy = false
     @Published private(set) var lastError: String?       // 화면에 조용히 표시할 실패 사유
     @Published var displayName: String {                 // 친구 목록에 보일 내 이름
@@ -43,6 +45,7 @@ final class FriendStore: ObservableObject {
     /// 내가 방금 찌른 친구 — 버튼을 잠시 잠가둡니다(서버도 10분 제한을 겁니다).
     @Published private(set) var recentlyNudged: Set<String> = []
 
+    private static let pausedKey = "pomopet.friendSyncPaused"
     private static let nameKey = "pomopet.friendDisplayName"
     private static let petHashKey = "pomopet.uploadedPetHash"
     private static let serverKey = "pomopet.friendServerURL"
@@ -57,6 +60,7 @@ final class FriendStore: ObservableObject {
     init() {
         displayName = UserDefaults.standard.string(forKey: Self.nameKey) ?? ""
         groups = FriendGroupStore.load()
+        isPaused = UserDefaults.standard.bool(forKey: Self.pausedKey)
         identity = FriendIdentityStore.load()
         if let identity {
             isConnected = true
@@ -96,6 +100,8 @@ final class FriendStore: ObservableObject {
         }
         FriendIdentityStore.clear()
         petCache.pruneKeeping(codes: [])
+        isPaused = false
+        UserDefaults.standard.set(false, forKey: Self.pausedKey)
         identity = nil
         myCode = nil
         isConnected = false
@@ -122,10 +128,27 @@ final class FriendStore: ObservableObject {
         }
     }
 
+    // MARK: - 잠시 멈추기
+    //
+    // "끄기" 를 누르는 사람 대부분은 잠깐 쉬려는 것이지 탈퇴하려는 게 아닙니다.
+    // 그래서 둘을 나눴습니다 — 멈춤은 주고받기만 쉬고, 계정·코드·친구 관계는 그대로 둡니다.
+
+    func setPaused(_ paused: Bool) {
+        isPaused = paused
+        UserDefaults.standard.set(paused, forKey: Self.pausedKey)
+
+        if paused {
+            stopSyncing()
+        } else {
+            startSyncing()
+            Task { await sync() }
+        }
+    }
+
     // MARK: - 주기 동기화
 
     func startSyncing() {
-        guard isConnected, timer == nil else { return }
+        guard isConnected, !isPaused, timer == nil else { return }
         timer = Timer.scheduledTimer(withTimeInterval: Self.syncInterval, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in await self?.sync() }
         }
@@ -139,14 +162,14 @@ final class FriendStore: ObservableObject {
     /// 내 상태를 올리고 친구 목록·찌르기를 한 번에 받아옵니다.
     /// 세션이 끝났을 때, 팝오버를 열었을 때, 그리고 1분마다 호출됩니다.
     func sync() async {
-        guard let identity, let controller else { return }
+        guard !isPaused, let identity, let controller else { return }
 
         let payload = HeartbeatRequest(
             name: displayName,
             dayKey: controller.todayDayKey,
             sessions: controller.todaySessions,
             minutes: controller.todayMinutes,
-            goal: controller.dailyGoal,
+            goal: 0,   // 하루 목표는 더 이상 쓰지 않습니다(서버 호환을 위해 필드만 유지)
             activated: controller.isActiveToday,
             streak: controller.currentStreak,
             phase: controller.phase.wireName
