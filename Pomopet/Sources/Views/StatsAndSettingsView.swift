@@ -10,7 +10,6 @@ struct StatsView: View {
             VStack(spacing: 10) {
                 statRow(label: "현재 연속", value: "🔥 \(controller.currentStreak)일")
                 statRow(label: "최고 연속", value: "\(controller.bestStreak)일")
-                statRow(label: "총 집중 세션", value: "\(controller.totalFocusSessions)회")
                 statRow(label: "총 집중 시간", value: formatMinutes(controller.totalFocusMinutes))
             }
 
@@ -137,15 +136,15 @@ struct HeatmapView: View {
     }
 
     private func dayCell(day: Int, key: Int, isToday: Bool, cal: Calendar) -> some View {
-        let sessions = dayStats[key]?.sessions ?? 0
+        let minutes = dayStats[key]?.minutes ?? 0
         let highlighted = hovered == key || isToday
         return RoundedRectangle(cornerRadius: 4)
-            .fill(color(for: sessions))
+            .fill(color(for: minutes))
             .frame(height: 24)
             .overlay(
                 Text("\(day)")
                     .font(.system(size: 10, weight: isToday ? .bold : .regular))
-                    .foregroundStyle(sessions >= 3 ? Color.white : Color.primary.opacity(0.7))
+                    .foregroundStyle(minutes >= 75 ? Color.white : Color.primary.opacity(0.7))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 4)
@@ -177,12 +176,10 @@ struct HeatmapView: View {
     // 그날 기록을 로컬라이즈된 조각으로 구성 (각 Text가 카탈로그를 통해 번역됨).
     private func recordText(key: Int, cal: Calendar) -> Text {
         let date = Text(verbatim: dateLabel(key: key, cal: cal))
-        guard let stat = dayStats[key], stat.sessions > 0 else {
+        guard let stat = dayStats[key], stat.minutes > 0 else {
             return date + Text(verbatim: " · ") + Text("기록 없음")
         }
-        return date + Text(verbatim: " · ")
-            + Text("\(stat.sessions)세션") + Text(verbatim: " · ")
-            + minutesText(stat.minutes)
+        return date + Text(verbatim: " · ") + minutesText(stat.minutes)
     }
 
     private func minutesText(_ minutes: Int) -> Text {
@@ -247,13 +244,15 @@ struct HeatmapView: View {
         (comps.year ?? 0) * 10000 + (comps.month ?? 0) * 100 + (comps.day ?? 0)
     }
 
-    // 강도 단계 색 (Less → More): 0세션 … 4+세션. 범례와 칸이 같은 색을 쓰도록 공유.
+    // 강도 단계 색 (Less → More). 범례와 칸이 같은 색을 쓰도록 공유.
     static func intensityColors(tint: Color) -> [Color] {
         [.gray.opacity(0.15), tint.opacity(0.4), tint.opacity(0.6), tint.opacity(0.8), tint]
     }
 
-    private func color(for sessions: Int) -> Color {
-        Self.intensityColors(tint: tint)[min(max(sessions, 0), 4)]
+    /// 집중 시간을 강도 4단계로. 25분(한 세션 기본 길이)을 한 칸으로 봅니다.
+    private func color(for minutes: Int) -> Color {
+        let level = minutes <= 0 ? 0 : min(4, (minutes - 1) / 25 + 1)
+        return Self.intensityColors(tint: tint)[level]
     }
 
     // 달력 한 칸 (앞 빈칸 포함)
@@ -286,78 +285,43 @@ struct SettingsView: View {
     @ObservedObject var controller: PomopetController
     @ObservedObject var updater: UpdaterManager
     @ObservedObject var lang: LanguageManager
-    @ObservedObject var friends: FriendStore
     @ObservedObject var workWatcher: WorkAppWatcher
     @State private var focus: Double
     @State private var breakV: Double
-    @State private var dailyGoal: Double
     @State private var didSave = false
-    @State private var confirmDisconnect = false
+    @State private var saveMessageToken = 0
     @State private var confirmingAppRemoval: String?   // 지울지 물어보는 중인 앱의 bundleID
-    @State private var confirmingRotate = false
 
     init(controller: PomopetController, updater: UpdaterManager, lang: LanguageManager,
-         friends: FriendStore, workWatcher: WorkAppWatcher) {
+         workWatcher: WorkAppWatcher) {
         self.controller = controller
         self.updater = updater
         self.lang = lang
-        self.friends = friends
         self.workWatcher = workWatcher
         _focus = State(initialValue: Double(controller.settings.focusMinutes))
         _breakV = State(initialValue: Double(controller.settings.breakMinutes))
-        _dailyGoal = State(initialValue: Double(controller.settings.dailyGoalSessions))
     }
 
     var body: some View {
+        // 항목마다 제목과 구분선을 둡니다.
+        // 예전에는 "캐릭터 바꾸기" 와 "저장" 이 같은 줄에 나란히 있어서,
+        // 저장이 무엇을 저장하는 건지(캐릭터인지 타이머인지) 알기 어려웠습니다.
         VStack(spacing: 14) {
-            sliderRow(title: "집중", value: $focus, range: 5...60, unit: "분")
-            sliderRow(title: "휴식", value: $breakV, range: 1...30, unit: "분")
-            sliderRow(title: "하루 목표", value: $dailyGoal, range: 1...20, unit: "세션")
+            timerSection
 
-            VStack(spacing: 4) {
-                // 캐릭터 바꾸기(좌) · 저장(우)
-                HStack {
-                    Button("캐릭터 바꾸기") {
-                        if let image = pickImageFile() {
-                            controller.changeCharacter(image)
-                        }
-                    }
-                    .buttonStyle(.bordered)
-                    .help("연속 기록은 그대로 유지돼요")
+            Divider()
 
-                    Spacer()
-
-                    Button("저장") {
-                        var s = controller.settings
-                        s.focusMinutes = Int(focus)
-                        s.breakMinutes = Int(breakV)
-                        s.dailyGoalSessions = Int(dailyGoal)
-                        controller.updateSettings(s)
-                        showSavedMessage()
-                    }
-                    .buttonStyle(.borderedProminent)
-                }
-
-                // 저장 버튼이 우측이라 확인 메시지도 우측 정렬
-                Label("저장되었습니다", systemImage: "checkmark.circle.fill")
-                    .font(.caption)
-                    .foregroundStyle(.green)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-                    .opacity(didSave ? 1 : 0)
-                    .animation(.easeInOut(duration: 0.2), value: didSave)
-            }
-            // 값을 수정하면 저장 메시지를 숨겨 현재 상태를 반영
-            .onChange(of: focus) { didSave = false }
-            .onChange(of: breakV) { didSave = false }
-            .onChange(of: dailyGoal) { didSave = false }
+            characterSection
 
             Divider()
 
             autoStartRow
 
-            if friends.isConnected { friendRow }
+            Divider()
 
             languageRow
+
+            Divider()
 
             updateRow
 
@@ -370,16 +334,88 @@ struct SettingsView: View {
         }
     }
 
+    // 타이머 길이 — 이 항목의 저장 버튼은 위 두 슬라이더만 저장합니다.
+    private var timerSection: some View {
+        VStack(spacing: 8) {
+            sectionTitle("타이머")
+
+            sliderRow(title: "집중", value: $focus, range: 5...60, unit: "분")
+            sliderRow(title: "휴식", value: $breakV, range: 1...30, unit: "분")
+
+            HStack {
+                Label("저장되었습니다", systemImage: "checkmark.circle.fill")
+                    .font(.caption)
+                    .foregroundStyle(.green)
+                    .opacity(didSave ? 1 : 0)
+                    .animation(.easeInOut(duration: didSave ? 0.15 : 0.5), value: didSave)
+
+                Spacer()
+
+                Button("타이머 저장") {
+                    var s = controller.settings
+                    s.focusMinutes = Int(focus)
+                    s.breakMinutes = Int(breakV)
+                    controller.updateSettings(s)
+                    showSavedMessage()
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.small)
+                .disabled(!timerChanged)
+            }
+        }
+        // 값을 수정하면 저장 메시지를 숨겨 현재 상태를 반영
+        .onChange(of: focus) { didSave = false }
+        .onChange(of: breakV) { didSave = false }
+    }
+
+    /// 슬라이더를 건드리지 않았으면 저장할 게 없습니다.
+    private var timerChanged: Bool {
+        Int(focus) != controller.settings.focusMinutes || Int(breakV) != controller.settings.breakMinutes
+    }
+
+    // 캐릭터 — 고르는 즉시 바뀌므로 따로 저장할 게 없습니다.
+    private var characterSection: some View {
+        VStack(spacing: 6) {
+            sectionTitle("캐릭터")
+
+            Button {
+                if let image = pickImageFile() {
+                    controller.changeCharacter(image)
+                }
+            } label: {
+                Label("캐릭터 바꾸기", systemImage: "photo")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+
+            Text("바꿔도 연속 기록과 집중 시간은 그대로예요")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    /// 항목 제목.
+    private func sectionTitle(_ text: LocalizedStringKey) -> some View {
+        Text(text)
+            .font(.system(size: 10, weight: .semibold))
+            .foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
     // 작업 앱을 켜면 집중 시작을 권하는 기능. 마음대로 시작하지 않고 물어보기만 합니다.
     private var autoStartRow: some View {
         VStack(spacing: 6) {
+            sectionTitle("작업 시작")
+
             Toggle(isOn: Binding(
                 get: { workWatcher.settings.enabled },
                 set: { workWatcher.settings.enabled = $0 }
             )) {
                 VStack(alignment: .leading, spacing: 1) {
-                    Text("작업 시작하면 물어보기").font(.callout)
-                    Text("정해둔 앱을 켜면 집중 시작을 권해요")
+                    Text("작업 시작하면 자동으로").font(.callout)
+                    Text("정해둔 앱을 켜면 3초 뒤 집중이 시작돼요")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
@@ -453,51 +489,10 @@ struct SettingsView: View {
     }
 
     // 친구 연동을 켠 뒤의 관리 항목 — 코드 재발급과 연동 끄기.
-    private var friendRow: some View {
-        VStack(spacing: 6) {
-            HStack {
-                Text("친구 연동").font(.caption).foregroundStyle(.secondary)
-                Spacer()
-                Text(verbatim: friends.myCode ?? "")
-                    .font(.system(size: 11, weight: .bold, design: .monospaced))
-                    .foregroundStyle(.secondary)
-            }
-
-            HStack(spacing: 6) {
-                // 예전 코드는 되살릴 수 없어서 한 번 더 물어봅니다.
-                Button(confirmingRotate ? "정말 바꿀까요?" : "코드 새로 받기") {
-                    if confirmingRotate {
-                        Task { await friends.rotateCode() }
-                        confirmingRotate = false
-                    } else {
-                        confirmingRotate = true
-                    }
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-                .help("예전 코드는 못 쓰게 됩니다. 이미 연결된 친구는 그대로예요")
-
-                Spacer()
-
-                Button(confirmDisconnect ? "정말 끌까요?" : "연동 끄기", role: .destructive) {
-                    if confirmDisconnect {
-                        Task { await friends.disconnect() }
-                        confirmDisconnect = false
-                    } else {
-                        confirmDisconnect = true
-                    }
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-                .help("서버에서 내 기록과 친구 관계를 지워요. 내 맥의 기록은 그대로예요")
-            }
-        }
-    }
-
     // 언어 전환: 시스템 언어와 무관하게 한국어/영어를 버튼으로 직접 선택.
     private var languageRow: some View {
         HStack {
-            Text("언어").font(.caption).foregroundStyle(.secondary)
+            Text("언어").font(.system(size: 10, weight: .semibold)).foregroundStyle(.secondary)
             Spacer()
             langButton("한국어", "ko")
             langButton("English", "en")
@@ -521,7 +516,7 @@ struct SettingsView: View {
     private var updateRow: some View {
         VStack(spacing: 6) {
             HStack {
-                Text("버전").font(.caption).foregroundStyle(.secondary)
+                Text("버전").font(.system(size: 10, weight: .semibold)).foregroundStyle(.secondary)
                 Spacer()
                 Text("v\(appVersion)").font(.caption).foregroundStyle(.secondary)
             }
@@ -542,11 +537,17 @@ struct SettingsView: View {
         (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) ?? "?"
     }
 
+    /// 저장 직후 "저장되었습니다" 를 잠깐 띄웠다가 스스로 사라지게 합니다.
+    /// 저장 버튼은 값을 다시 건드리기 전까지 비활성이라, 이 메시지가 유일한 확인 신호입니다.
     private func showSavedMessage() {
+        saveMessageToken += 1
+        let token = saveMessageToken
         didSave = true
+
         Task { @MainActor in
             try? await Task.sleep(nanoseconds: 2_000_000_000)
-            didSave = false
+            // 그사이 다시 저장했으면 새 타이머에 맡기고 여기서는 끄지 않습니다.
+            if token == saveMessageToken { didSave = false }
         }
     }
 
