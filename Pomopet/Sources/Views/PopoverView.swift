@@ -95,7 +95,7 @@ struct PopoverView: View {
     private var characterScreen: some View {
         let grid = PetVisual.grid() ?? []
         let tint = PetVisual.tint()
-        let active = controller.isActiveToday
+        let active = controller.isPetAwake
         let tier = StreakTier.tier(for: controller.currentStreak)
         let borderColor = tier?.color ?? tint
 
@@ -167,7 +167,8 @@ struct PopoverView: View {
     }
 
     private var todayCaption: LocalizedStringKey {
-        controller.isActiveToday
+        if controller.phase == .focusing { return "집중하는 동안 펫도 깨어 있어요" }
+        return controller.isActiveToday
             ? "오늘도 집중했어요! 연속 유지 중 🔥"
             : "오늘 집중하면 펫이 깨어나요"
     }
@@ -261,8 +262,27 @@ struct StreakTier {
 // 첫 실행: 키울 캐릭터 이미지를 올리는 화면.
 struct CharacterUploadView: View {
     @ObservedObject var controller: PomopetController
+    @State private var pending: NSImage?
 
     var body: some View {
+        if let pending {
+            CharacterPreview(
+                image: pending,
+                onConfirm: { final in
+                    controller.setCharacter(final)
+                    self.pending = nil
+                },
+                onRetry: { self.pending = pickImageFile() ?? pending }
+            )
+            // 다른 이미지를 고르면 미리보기를 새로 시작합니다.
+            // 이게 없으면 SwiftUI 가 같은 뷰를 재사용해, 앞서 배경을 지운 결과가 그대로 남습니다.
+            .id(ObjectIdentifier(pending))
+        } else {
+            picker
+        }
+    }
+
+    private var picker: some View {
         VStack(spacing: 14) {
             Image(systemName: "photo.badge.plus")
                 .font(.system(size: 40))
@@ -277,9 +297,7 @@ struct CharacterUploadView: View {
                 .multilineTextAlignment(.center)
 
             Button {
-                if let image = pickImageFile() {
-                    controller.setCharacter(image)
-                }
+                pending = pickImageFile()
             } label: {
                 Label("이미지 선택", systemImage: "photo")
                     .frame(maxWidth: .infinity)
