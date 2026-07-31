@@ -90,8 +90,11 @@ bash scripts/package-dmg.sh 1.0.0   # → dist/Pomopet-1.0.0.dmg
 
 #### 릴리스 (메인테이너용)
 ```bash
-scripts/release.sh 1.2.3   # DMG 빌드 → GitHub Release 업로드 → Homebrew cask(sha256) 갱신
+# main 브랜치에서만 동작합니다 (DMG는 현재 작업트리에서 빌드되므로 태그 대상과 일치해야 함)
+scripts/release.sh 1.2.3
+# DMG 빌드 → GitHub Release → Sparkle appcast EdDSA 서명 → Homebrew cask(sha256) 갱신
 ```
+> 릴리스 노트는 `CHANGELOG.md`의 해당 버전 섹션을 그대로 읽어 씁니다. 릴리스 전에 먼저 작성하세요.
 > DMG는 재생성 시 해시가 바뀌므로 **릴리스 빌더는 이 스크립트 하나로 일원화**합니다.
 > GitHub Actions(`ci.yml`)는 빌드가 깨지지 않는지 확인하는 체크 전용입니다.
 
@@ -125,12 +128,12 @@ scripts/release.sh 1.2.3   # DMG 빌드 → GitHub Release 업로드 → Homebre
 | ⚙️ | 설정 |
 
 ### 설정
-- **집중** — 한 세션 길이 (5~60분)
-- **휴식** — 세션 후 쉬는 시간 (1~30분)
-- **작업 시작하면 자동으로** — 정해둔 앱을 켜면 3초 뒤 집중이 시작됩니다
-- **캐릭터 바꾸기** — 이미지를 교체해도 연속 기록은 그대로 유지
-- **작업 시작하면 물어보기** — 정해둔 앱을 켜면 집중 시작을 권함 (기본 꺼짐)
+- **타이머** — 집중 5~60분 · 휴식 1~30분
+- **캐릭터** — 이미지를 바꿔도 연속 기록과 집중 시간은 그대로 유지
+- **작업 시작하면 자동으로** — 정해둔 앱을 켜면 3초 뒤 집중이 시작됩니다 (기본 꺼짐)
 - **언어** — 한국어 / English 버튼으로 즉시 전환
+
+친구 관련 설정(내 이름·코드·잠시 멈추기·연동 끄기)은 **친구 탭** 안에 있습니다.
 
 > 집중 중 5분 넘게 아무 입력이 없으면 중지할지 물어봅니다. 자리를 비운 시간이 집중 기록에 섞이지 않게요.
 
@@ -168,18 +171,27 @@ scripts/release.sh 1.2.3   # DMG 빌드 → GitHub Release 업로드 → Homebre
 
 ## 🛠️ 기술 스택
 
-- **SwiftUI** · `MenuBarExtra` (메뉴바 전용 앱)
+- **SwiftUI** · `MenuBarExtra` (메뉴바 전용 앱, Dock 아이콘 없음)
 - **SwiftData** — 일일 기록·통계 영구 저장
 - **Canvas** — 외부 이미지 없이 도트 렌더링 (`ImagePixelizer`가 업로드 이미지를 색 격자로 변환)
+- **Sparkle** — 인앱 자동 업데이트 (EdDSA 서명 검증)
+- **NSWorkspace** — 작업 앱 감지 (권한 불필요)
+- **Cloudflare Workers + D1** — 친구 연동 서버 ([`server/`](server/), 선택 기능)
 
 ### 프로젝트 구조
 ```
 Pomopet/Sources/
-├─ App/        앱 진입점 (PomopetApp, 메뉴바 라벨)
-├─ Core/       타이머·스트릭 로직 (PomopetController), 설정 (TimerSettings), 업데이트 확인 (UpdateChecker)
-├─ Models/     SwiftData 모델 (DailyRecord, AppStats)
-├─ Creatures/  도트 렌더링 (CustomPet, CharacterView)
-└─ Views/      화면 (PopoverView, Stats/Settings)
+├─ App/         앱 진입점 (PomopetApp, 메뉴바 라벨)
+├─ Core/        타이머·스트릭 (PomopetController), 설정 (TimerSettings),
+│               저장소 경로 (StoreLocation), 언어 전환 (Localization),
+│               자동 업데이트 (UpdaterManager)
+│   ├─ Friends/   친구 연동 — 통신·신원·펫 캐시·그룹 (기본 꺼짐)
+│   └─ AutoStart/ 작업 앱 감지 (WorkAppWatcher), 자리 비움 감지 (IdleWatcher)
+├─ Models/      SwiftData 모델 (DailyRecord, AppStats)
+├─ Creatures/   도트 렌더링 (CustomPet, CharacterView, PetMenuBarIcon)
+└─ Views/       화면 (Popover, Stats/Settings, Friends, 제안 카드)
+
+server/         친구 연동 서버 (Cloudflare Workers + D1)
 ```
 
 ---
