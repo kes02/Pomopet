@@ -30,10 +30,18 @@ enum PetMenuBarIcon {
 
     // MARK: 그리기
 
+    /// 저장 전 이미지로도 만들 수 있게 — 업로드 미리보기에서 씁니다.
+    static func image(from source: NSImage, awake: Bool) -> NSImage? {
+        render(source: source, awake: awake)
+    }
+
     private static func render(awake: Bool) -> NSImage? {
-        guard let source = CustomPetStore.loadImage(),
-              let crop = opaqueBounds(of: source)
-        else { return nil }
+        guard let source = CustomPetStore.loadImage() else { return nil }
+        return render(source: source, awake: awake)
+    }
+
+    private static func render(source: NSImage, awake: Bool) -> NSImage? {
+        guard let crop = opaqueBounds(of: source) else { return nil }
 
         let canvas = NSImage(size: NSSize(width: size, height: size))
         canvas.lockFocus()

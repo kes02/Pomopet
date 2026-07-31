@@ -75,6 +75,10 @@ enum CustomPetStore {
 // MARK: - 이미지 → 도트 변환
 enum ImagePixelizer {
     /// 이미지를 n x n 비트맵으로 다시 그립니다(다운샘플링).
+    ///
+    /// **비율을 지켜서** 정사각형 안에 맞춰 넣고 남는 곳은 투명으로 둡니다.
+    /// 예전에는 정사각형에 그대로 욱여넣어서, 정사각형이 아닌 사진(대부분의 스마트폰 사진)이
+    /// 세로로 늘어나거나 납작하게 눌렸습니다.
     static func bitmap(from image: NSImage, side n: Int) -> NSBitmapImageRep? {
         guard let rep = NSBitmapImageRep(
             bitmapDataPlanes: nil, pixelsWide: n, pixelsHigh: n,
@@ -82,13 +86,28 @@ enum ImagePixelizer {
             colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0
         ) else { return nil }
 
-        rep.size = NSSize(width: n, height: n)
+        let side = CGFloat(n)
+        let source = image.size
+        guard source.width > 0, source.height > 0 else { return nil }
+
+        let scale = min(side / source.width, side / source.height)
+        let drawn = NSSize(width: source.width * scale, height: source.height * scale)
+        let target = NSRect(
+            x: (side - drawn.width) / 2,
+            y: (side - drawn.height) / 2,
+            width: drawn.width,
+            height: drawn.height
+        )
+
+        rep.size = NSSize(width: side, height: side)
         NSGraphicsContext.saveGraphicsState()
         if let ctx = NSGraphicsContext(bitmapImageRep: rep) {
             NSGraphicsContext.current = ctx
+            // 새 비트맵은 내용이 정해져 있지 않으므로 먼저 투명으로 비웁니다.
+            NSColor.clear.setFill()
+            NSRect(x: 0, y: 0, width: side, height: side).fill(using: .copy)
             ctx.imageInterpolation = .high   // 셀마다 평균색에 가깝게
-            image.draw(in: NSRect(x: 0, y: 0, width: n, height: n),
-                       from: .zero, operation: .copy, fraction: 1.0)
+            image.draw(in: target, from: .zero, operation: .sourceOver, fraction: 1.0)
         }
         NSGraphicsContext.restoreGraphicsState()
         return rep
@@ -150,7 +169,13 @@ enum PetVisual {
     /// 노치처럼 좁은 자리에서는 그 여백까지 크기에 포함되어 캐릭터가 실제보다 작게 보입니다.
     /// 비어 있는 바깥쪽 줄·칸을 걷어내서 캐릭터가 주어진 공간을 꽉 채우게 합니다.
     static func trimmedGrid() -> [[Color?]]? {
-        guard let grid = grid(), !grid.isEmpty else { return nil }
+        guard let grid = grid() else { return nil }
+        return trimmed(grid)
+    }
+
+    /// 아무 격자나 받아 여백을 잘라냅니다. 미리보기처럼 저장 전 이미지에도 쓸 수 있습니다.
+    static func trimmed(_ grid: [[Color?]]) -> [[Color?]]? {
+        guard !grid.isEmpty else { return nil }
 
         var top = 0, bottom = grid.count - 1
         while top <= bottom, grid[top].allSatisfy({ $0 == nil }) { top += 1 }
