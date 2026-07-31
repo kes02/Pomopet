@@ -33,18 +33,16 @@ final class WorkAppWatcher: ObservableObject {
     private var dwellTask: Task<Void, Never>?
     private var snoozedUntil: Date?
 
-    /// 대답 없이 그냥 지나간 횟수(그날 기준). 계속 무시하면 그만 물어봅니다.
-    private var ignoredToday = 0
-    private var ignoredDayKey = 0
+    /// 그날 "나중에" 를 누른 횟수. 계속 거절하면 그날은 그만 묻습니다.
+    private var declinedToday = 0
+    private var declinedDayKey = 0
 
     /// 사용자가 직접 중단한 뒤 이만큼은 묻지 않습니다.
     private static let afterManualStop: TimeInterval = 15 * 60
     /// "나중에" 를 누른 뒤 이만큼은 묻지 않습니다.
     private static let afterDismiss: TimeInterval = 30 * 60
-    /// 대답 없이 저절로 사라진 뒤 이만큼은 묻지 않습니다.
-    private static let afterIgnore: TimeInterval = 10 * 60
-    /// 하루에 이만큼 연달아 무시하면 그날은 더 묻지 않습니다.
-    private static let maxIgnoresPerDay = 3
+    /// 하루에 이만큼 연달아 거절하면 그날은 더 묻지 않습니다.
+    private static let maxDeclinesPerDay = 3
 
     init() {
         settings = AutoStartSettings.load()
@@ -81,37 +79,32 @@ final class WorkAppWatcher: ObservableObject {
     }
 
     /// "나중에" — 한동안 조용히 있습니다.
-    func snooze() {
-        snoozedUntil = Date().addingTimeInterval(Self.afterDismiss)
-    }
-
-    /// 대답 없이 저절로 사라졌을 때.
     ///
-    /// 이게 없으면 무시할수록 더 자주 묻는 꼴이 됩니다 — 작업 앱으로 돌아올 때마다 다시 뜨니까요.
-    /// 그래서 무시도 한 번의 대답으로 치고, 그날 몇 번 연달아 무시하면 아예 그만둡니다.
-    func noteIgnored() {
+    /// 이제는 가만히 두면 시작되므로, 거절은 사용자가 분명하게 표현한 의사입니다.
+    /// 그래서 몇 번 연달아 거절하면 그날은 아예 묻지 않습니다.
+    func snooze() {
         rollOverDayIfNeeded()
-        ignoredToday += 1
+        declinedToday += 1
 
-        if ignoredToday >= Self.maxIgnoresPerDay {
+        if declinedToday >= Self.maxDeclinesPerDay {
             snoozedUntil = Calendar.current.startOfDay(for: Date().addingTimeInterval(24 * 60 * 60))
         } else {
-            snoozedUntil = Date().addingTimeInterval(Self.afterIgnore)
+            snoozedUntil = Date().addingTimeInterval(Self.afterDismiss)
         }
     }
 
-    /// 제안을 받아들여 실제로 시작했으면 무시 횟수를 초기화합니다.
+    /// 실제로 시작했으면 거절 횟수를 초기화합니다.
     func noteAccepted() {
         rollOverDayIfNeeded()
-        ignoredToday = 0
+        declinedToday = 0
     }
 
     private func rollOverDayIfNeeded() {
         let c = Calendar.current.dateComponents([.year, .month, .day], from: Date())
         let key = (c.year ?? 0) * 10000 + (c.month ?? 0) * 100 + (c.day ?? 0)
-        if key != ignoredDayKey {
-            ignoredDayKey = key
-            ignoredToday = 0
+        if key != declinedDayKey {
+            declinedDayKey = key
+            declinedToday = 0
         }
     }
 
