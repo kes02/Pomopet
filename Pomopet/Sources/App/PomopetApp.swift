@@ -143,8 +143,7 @@ struct MenuBarLabel: View {
 
     @ViewBuilder
     private var petIcon: some View {
-        // 집중 중에는 자고 있어도 깨어난 모습으로 — 지금 공부하고 있다는 표시.
-        let awake = controller.isActiveToday || controller.phase == .focusing
+        let awake = controller.isPetAwake
 
         if let icon = PetMenuBarIcon.image(awake: awake) {
             Image(nsImage: icon)

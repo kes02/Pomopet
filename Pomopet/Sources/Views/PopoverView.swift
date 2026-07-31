@@ -95,7 +95,7 @@ struct PopoverView: View {
     private var characterScreen: some View {
         let grid = PetVisual.grid() ?? []
         let tint = PetVisual.tint()
-        let active = controller.isActiveToday
+        let active = controller.isPetAwake
         let tier = StreakTier.tier(for: controller.currentStreak)
         let borderColor = tier?.color ?? tint
 
@@ -167,7 +167,8 @@ struct PopoverView: View {
     }
 
     private var todayCaption: LocalizedStringKey {
-        controller.isActiveToday
+        if controller.phase == .focusing { return "집중하는 동안 펫도 깨어 있어요" }
+        return controller.isActiveToday
             ? "오늘도 집중했어요! 연속 유지 중 🔥"
             : "오늘 집중하면 펫이 깨어나요"
     }

@@ -199,6 +199,11 @@ func pickImageFile() -> NSImage? {
     panel.canChooseDirectories = false
     panel.canChooseFiles = true
     panel.prompt = "이 캐릭터로 시작"
+
+    // 메뉴바 전용 앱(LSUIElement)이라 그냥 띄우면 앱이 활성화되지 않습니다.
+    // 그러면 창은 보이는데 키보드 입력이 그쪽으로 가지 않아 검색창에 글자가 안 쳐집니다.
+    NSApp.activate(ignoringOtherApps: true)
+
     guard panel.runModal() == .OK, let url = panel.url else { return nil }
     return NSImage(contentsOf: url)
 }

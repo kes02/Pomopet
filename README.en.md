@@ -15,7 +15,7 @@ Miss a day and your character falls asleep in grayscale — so **"don't let my c
 There are plenty of pet-raising Pomodoro apps. Pomopet differs in three ways.
 
 1. **🖼️ Your uploaded image becomes the pet** — Instead of picking from built-in cats and dogs, you **upload your own favorite character** and raise it as pixel art. "Raising your favorite character right in your menu bar" — you'll only find that here.
-2. **😴 It falls asleep if you don't show up** — Not just "active while focusing / asleep on breaks." **If you don't hit your daily goal, your character falls asleep in grayscale.** It's designed around loss aversion, like a Duolingo streak — the drive not to lose something you want to keep.
+2. **😴 It falls asleep if you don't show up** — Not just "active while focusing / asleep on breaks." **If you don't focus at all today, your character falls asleep in grayscale.** It's designed around loss aversion, like a Duolingo streak — the drive not to lose something you want to keep.
 3. **🆓 Free · open source** — No payments, accounts, or subscriptions. All code is public.
 
 > Plus milestone badges (BRONZE→DIAMOND) and an activity heatmap.
@@ -32,27 +32,26 @@ There are plenty of pet-raising Pomodoro apps. Pomopet differs in three ways.
 
 Once it's running, it lives in your Mac's menu bar like this.
 
-| No focus today (asleep) | Focused today (awake) | Focusing / break |
-|:---:|:---:|:---:|
-| <img src="docs/screenshots/bar/sleep.png" height="36" alt="Sleeping pet"> | <img src="docs/screenshots/bar/wakeup.png" height="36" alt="Awake pet"> | <img src="docs/screenshots/bar/minutes.png" height="36" alt="Time remaining"> |
+| Focused today (awake · streak) | Focusing / resting (time left) |
+|:---:|:---:|
+| <img src="docs/screenshots/bar/wakeup.png" height="36" alt="Awake pet"> | <img src="docs/screenshots/bar/minutes.png" height="36" alt="Time remaining"> |
 
-> If you haven't focused at all today it stays asleep as `(-.-)`; after even one session it wakes up to `(•ᴗ•)`. During focus or break, it shows the time remaining.
+> Your uploaded character sits right in the menu bar. It stays grayscale and asleep until you focus today, then wakes up in full color with your streak beside it. During focus or a break it shows the time remaining.
 
 ---
 
 ## ✨ Features
 
 - **🖼️ Upload your own character** — Drop in a favorite image and it's converted to pixel art for your pet
-- **🔥 Streak** — Hit your daily goal to build a streak; break it and it resets
+- **🔥 Streak** — Focus on any given day to keep the streak; skip a day and it resets
 - **😴 Awake / Asleep** — Meet today's goal and your character wakes up in color and bounces; otherwise it sleeps in grayscale
 - **🏅 Milestone aura** — A glowing border: 3-day streak BRONZE → 7 SILVER → 30 GOLD → 100 DIAMOND
 - **🌱 Activity heatmap** — Your study record as a monthly calendar (browse months · hover a day for details)
-- **🎯 Daily goal** — Set how many sessions a day are needed to "activate" (1–20)
-- **🍅 Dead-simple Pomodoro** — Just three settings: focus / break / daily goal
+- **🍅 Dead-simple Pomodoro** — Just two settings: focus and break. No goals to set
 - **🪶 Lightweight** — Lives only in the menu bar (no Dock icon). All graphics are rendered in code, with no external images
 - **🔄 Auto-update** — Installs new versions in-app automatically (via [Sparkle](https://sparkle-project.org); details in [Updates](#-updates))
 - **👥 Grow together with friends** — Connect with a 6-character code to see whether your friends' pets are awake, and poke the sleeping ones. Off by default ([what is shared](#-friends-and-privacy))
-- **▶️ Work app detection** — Opens Xcode or VS Code? Pomopet asks "Start a focus session?"
+- **▶️ Work app detection** — Open Xcode or VS Code and focus starts 3 seconds later (with time to decline)
 - **☕ Away detection** — If there's no input for 5 minutes during a session, Pomopet asks whether to stop, so idle time doesn't inflate your record
 - **🌐 Korean · English** — Follows your system language, or switch it yourself with a button in Settings
 
@@ -113,8 +112,8 @@ scripts/release.sh 1.2.3   # build DMG → upload GitHub Release → update Home
 
 1. Click the menu bar icon → **choose a character image to raise**
    - A transparent-background PNG (cutout) looks best — only the character stands out.
-2. **Start focus** → when the timer ends, one session is complete
-3. Complete today's **daily goal** number of sessions and your character **activates** (wakes up in color) 🔥
+2. **Start focus** → your character wakes up the moment you begin
+3. Any focus recorded today keeps your **streak** going 🔥 (stop early and you still keep the minutes, as long as it was 5+)
 4. Keep it up day after day to build your streak and heatmap
 
 ### Screen guide
@@ -122,16 +121,16 @@ scripts/release.sh 1.2.3   # build DMG → upload GitHub Release → update Home
 |---|---|
 | 🐾 | Go to the character screen (home) |
 | 📊 | Stats · streak · activity heatmap |
-| ⚙️ | Settings (focus/break/daily goal, change character) |
+| ⚙️ | Settings (focus/break, character, work app detection) |
 
 ### Settings
 - **Focus** — Length of one session (5–60 min)
 - **Break** — Rest time after a session (1–30 min)
-- **Daily goal** — Sessions needed to activate (1–20)
+- **Auto-start on work apps** — Focus begins 3 seconds after you open an app you picked
 - **Change character** — Swapping the image keeps your streak intact
 - **Language** — Switch between 한국어 / English instantly
 
-> Even if you change the daily goal midway, if you've already met it today your character won't sleep and your streak stays.
+> If there's no input for 5 minutes during a session, Pomopet asks whether to stop — so time away doesn't inflate your record.
 
 
 ---
@@ -147,7 +146,7 @@ Turning it on creates an anonymous account and gives you a 6-character code. No 
 | Item | Example |
 |---|---|
 | Name | Display only, typed by you |
-| Today's focus minutes / sessions / goal | `75`, `3`, `5` |
+| Today's focus minutes / completed sessions | `75`, `3` |
 | Whether the pet woke up / streak | `true`, `12` |
 | Whether you're focusing right now | `focusing` |
 | Pet image | 26×26 PNG, only when it changes |
