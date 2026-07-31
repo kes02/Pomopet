@@ -29,7 +29,7 @@ struct AutoStartSettings: Codable, Equatable {
     var dwellSeconds: Int
     /// 카드가 뜬 뒤 이 초 안에 "나중에" 를 누르지 않으면 그대로 시작합니다.
     var countdownSeconds: Int
-    /// 오늘 이미 집중했으면 그만 물어보기
+    /// 더 이상 쓰지 않습니다. 예전 저장본을 읽기 위해 자리만 남겨둡니다.
     var skipWhenGoalMet: Bool
 
     static let `default` = AutoStartSettings(
@@ -91,7 +91,11 @@ func pickApplication() -> TriggerApp? {
     panel.canChooseDirectories = false
     panel.allowsMultipleSelection = false
     panel.directoryURL = URL(fileURLWithPath: "/Applications")
-    panel.prompt = String(localized: "선택")
+    panel.prompt = appString("선택")
+
+    // 메뉴바 전용 앱(LSUIElement)이라 그냥 띄우면 앱이 활성화되지 않습니다.
+    // 그러면 창은 보이는데 키보드 입력이 그쪽으로 가지 않아 검색창에 글자가 안 쳐집니다.
+    NSApp.activate(ignoringOtherApps: true)
 
     guard panel.runModal() == .OK,
           let url = panel.url,

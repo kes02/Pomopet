@@ -37,6 +37,18 @@ final class LanguageManager: ObservableObject {
     }
 }
 
+// MARK: - 코드에서 문자열 꺼내기
+//
+// `String(localized:)` 를 쓰면 안 됩니다. 그 API 는 시스템 언어를 보고 값을 고르는데,
+// 이 앱은 Bundle.main 의 문자열 조회를 가로채는 방식으로 언어를 바꾸기 때문에
+// 설정에서 English 로 바꿔도 그 경로를 타지 않아 한글이 그대로 남습니다.
+// (Text("…") 같은 LocalizedStringKey 는 가로채기를 타므로 정상 동작합니다)
+//
+// 뷰가 아닌 곳(오류 메시지·기본 그룹 이름 등)에서는 이 함수를 쓰세요.
+func appString(_ key: String) -> String {
+    Bundle.main.localizedString(forKey: key, value: key, table: nil)
+}
+
 // MARK: - Bundle 언어 교체 (런타임 전환)
 // Bundle.main의 문자열 조회를 선택 언어의 .lproj 번들로 리다이렉트합니다.
 // 시스템 언어를 바꾸지 않고도 Text("…") 자동 번역이 선택 언어를 따르게 됩니다.
