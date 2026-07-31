@@ -16,15 +16,15 @@ enum FriendClientError: LocalizedError, Equatable {
 
     var errorDescription: String? {
         switch self {
-        case .notConnected: return String(localized: "친구 연동이 켜져 있지 않아요")
-        case .codeNotFound: return String(localized: "그런 코드를 가진 사람이 없어요")
-        case .alreadyFriend: return String(localized: "이미 친구예요")
-        case .cannotAddSelf: return String(localized: "내 코드는 추가할 수 없어요")
-        case .notAFriend: return String(localized: "친구가 아니에요")
-        case .tooSoon: return String(localized: "방금 찔렀어요. 조금 뒤에 다시 해주세요")
-        case .dailyLimit: return String(localized: "오늘은 그만 찌르는 게 좋겠어요")
-        case .server: return String(localized: "서버가 응답하지 않아요")
-        case .network: return String(localized: "인터넷에 연결되어 있는지 확인해주세요")
+        case .notConnected: return appString("친구 연동이 켜져 있지 않아요")
+        case .codeNotFound: return appString("그런 코드를 가진 사람이 없어요")
+        case .alreadyFriend: return appString("이미 친구예요")
+        case .cannotAddSelf: return appString("내 코드는 추가할 수 없어요")
+        case .notAFriend: return appString("친구가 아니에요")
+        case .tooSoon: return appString("방금 찔렀어요. 조금 뒤에 다시 해주세요")
+        case .dailyLimit: return appString("오늘은 그만 찌르는 게 좋겠어요")
+        case .server: return appString("서버가 응답하지 않아요")
+        case .network: return appString("인터넷에 연결되어 있는지 확인해주세요")
         }
     }
 }
