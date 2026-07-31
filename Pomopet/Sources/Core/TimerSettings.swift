@@ -16,26 +16,26 @@ enum TimerPhase {
 // MARK: - 타이머 설정
 // 각 구간의 길이(분). 사용자가 설정에서 바꿀 수 있습니다.
 // 휴식은 짧은/긴 구분 없이 하나로 통합되어 있습니다.
+// 하루 목표는 두지 않습니다. 오늘 집중했으면 펫이 깨어나고 연속이 이어집니다.
+// "몇 세션을 채워야 한다" 는 기준은 세션이라는 단위를 계속 의식하게 만들어 오히려 헷갈렸습니다.
 struct TimerSettings: Codable, Equatable {
     var focusMinutes: Int
     var breakMinutes: Int            // 휴식 길이(짧은/긴 구분 없음)
-    var dailyGoalSessions: Int       // 하루에 몇 세션을 채워야 "활성화"되는지
 
     static let `default` = TimerSettings(
         focusMinutes: 25,
-        breakMinutes: 5,
-        dailyGoalSessions: 1
+        breakMinutes: 5
     )
 
-    init(focusMinutes: Int, breakMinutes: Int, dailyGoalSessions: Int) {
+    init(focusMinutes: Int, breakMinutes: Int) {
         self.focusMinutes = focusMinutes
         self.breakMinutes = breakMinutes
-        self.dailyGoalSessions = dailyGoalSessions
     }
 
-    // 예전 저장본(shortBreakMinutes 등)도 안전하게 읽기 위한 디코딩
+    // 예전 저장본(shortBreakMinutes·dailyGoalSessions)도 안전하게 읽기 위한 디코딩.
+    // 하루 목표는 이제 쓰지 않으므로 읽고 버립니다.
     enum CodingKeys: String, CodingKey {
-        case focusMinutes, breakMinutes, dailyGoalSessions, shortBreakMinutes
+        case focusMinutes, breakMinutes, shortBreakMinutes
     }
 
     init(from decoder: Decoder) throws {
@@ -44,14 +44,12 @@ struct TimerSettings: Codable, Equatable {
         breakMinutes = (try? c.decodeIfPresent(Int.self, forKey: .breakMinutes)) ?? nil
             ?? (try? c.decodeIfPresent(Int.self, forKey: .shortBreakMinutes)) ?? nil
             ?? 5
-        dailyGoalSessions = try c.decodeIfPresent(Int.self, forKey: .dailyGoalSessions) ?? 1
     }
 
     func encode(to encoder: Encoder) throws {
         var c = encoder.container(keyedBy: CodingKeys.self)
         try c.encode(focusMinutes, forKey: .focusMinutes)
         try c.encode(breakMinutes, forKey: .breakMinutes)
-        try c.encode(dailyGoalSessions, forKey: .dailyGoalSessions)
     }
 
     // UserDefaults 저장용 키

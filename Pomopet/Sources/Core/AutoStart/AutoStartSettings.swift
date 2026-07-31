@@ -4,8 +4,9 @@ import UniformTypeIdentifiers
 
 // MARK: - 작업 시작 감지 설정
 //
-// 정해둔 앱(Xcode, VS Code 등)이 화면 앞으로 나오면 "집중 시작할까요?" 하고 물어봅니다.
-// 마음대로 타이머를 켜지는 않습니다 — 물어보기만 하고, 시작할지는 사용자가 정합니다.
+// 정해둔 앱(Xcode, VS Code 등)이 화면 앞으로 나오면 카운트다운 카드를 띄우고,
+// 그 사이 "나중에" 를 누르지 않으면 그대로 집중을 시작합니다.
+// 매번 시작 버튼을 누르는 게 번거로워서 기본값을 "시작" 쪽으로 뒀습니다.
 
 struct TriggerApp: Codable, Identifiable, Equatable {
     let bundleID: String
@@ -26,15 +27,42 @@ struct AutoStartSettings: Codable, Equatable {
     var apps: [TriggerApp]
     /// 앱을 잠깐 스쳐 지나간 것과 진짜 작업을 시작한 것을 구분하기 위한 대기 시간(초)
     var dwellSeconds: Int
-    /// 오늘 목표를 이미 채웠으면 그만 물어보기
+    /// 카드가 뜬 뒤 이 초 안에 "나중에" 를 누르지 않으면 그대로 시작합니다.
+    var countdownSeconds: Int
+    /// 오늘 이미 집중했으면 그만 물어보기
     var skipWhenGoalMet: Bool
 
     static let `default` = AutoStartSettings(
         enabled: false,
         apps: [],
         dwellSeconds: 10,
+        countdownSeconds: 3,
         skipWhenGoalMet: true
     )
+
+    // 나중에 항목이 늘어도 예전 저장본을 계속 읽을 수 있게, 없는 값은 기본값으로 채웁니다.
+    // (필수 항목으로 두면 항목을 하나 추가할 때마다 사용자의 앱 목록이 통째로 초기화됩니다)
+    enum CodingKeys: String, CodingKey {
+        case enabled, apps, dwellSeconds, countdownSeconds, skipWhenGoalMet
+    }
+
+    init(enabled: Bool, apps: [TriggerApp], dwellSeconds: Int, countdownSeconds: Int, skipWhenGoalMet: Bool) {
+        self.enabled = enabled
+        self.apps = apps
+        self.dwellSeconds = dwellSeconds
+        self.countdownSeconds = countdownSeconds
+        self.skipWhenGoalMet = skipWhenGoalMet
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let fallback = Self.default
+        enabled = try c.decodeIfPresent(Bool.self, forKey: .enabled) ?? fallback.enabled
+        apps = try c.decodeIfPresent([TriggerApp].self, forKey: .apps) ?? fallback.apps
+        dwellSeconds = try c.decodeIfPresent(Int.self, forKey: .dwellSeconds) ?? fallback.dwellSeconds
+        countdownSeconds = try c.decodeIfPresent(Int.self, forKey: .countdownSeconds) ?? fallback.countdownSeconds
+        skipWhenGoalMet = try c.decodeIfPresent(Bool.self, forKey: .skipWhenGoalMet) ?? fallback.skipWhenGoalMet
+    }
 
     static let storageKey = "pomopet.autoStart"
 
@@ -45,10 +73,13 @@ struct AutoStartSettings: Codable, Equatable {
     }
 
     static func load() -> AutoStartSettings {
-        guard let data = UserDefaults.standard.data(forKey: storageKey),
-              let decoded = try? JSONDecoder().decode(AutoStartSettings.self, from: data)
-        else { return .default }
-        return decoded
+        guard let data = UserDefaults.standard.data(forKey: storageKey) else { return .default }
+        do {
+            return try JSONDecoder().decode(AutoStartSettings.self, from: data)
+        } catch {
+            // 여기까지 오면 저장본이 정말 깨진 경우. 기본값으로 시작하되 원본은 덮어쓰지 않습니다.
+            return .default
+        }
     }
 }
 

@@ -74,13 +74,12 @@ struct PomopetApp: App {
         watcher.onSuggest = { [weak controller, weak watcher] appName in
             presenter.show(
                 appName: appName,
+                countdown: watcher?.settings.countdownSeconds ?? 3,
                 onStart: {
                     watcher?.noteAccepted()
                     controller?.startFocus()
                 },
-                onLater: { watcher?.snooze() },
-                // 대답 없이 사라진 것도 한 번의 거절로 칩니다 — 아니면 무시할수록 더 자주 뜹니다.
-                onIgnore: { watcher?.noteIgnored() }
+                onLater: { watcher?.snooze() }
             )
         }
         watcher.start()
@@ -92,10 +91,11 @@ struct PomopetApp: App {
         idleWatcher.onAway = { [weak controller, weak watcher] minutes in
             presenter.showAway(
                 idleMinutes: minutes,
-                onStop: { controller?.stop() },
+                // 자리를 비운 시간은 집중 시간에서 빼고 기록합니다.
+                onStop: { controller?.stopAfterAway(idleMinutes: minutes) },
                 onKeep: { },
                 onIgnore: {
-                    controller?.stop()
+                    controller?.stopAfterAway(idleMinutes: minutes)
                     watcher?.snooze()   // 자리에 없으니 시작 제안도 잠시 멈춥니다
                 }
             )
