@@ -1,18 +1,38 @@
 {
   "sourceLanguage" : "ko",
   "strings" : {
-    "%lld" : {
-
-    },
-    "%lld/%lld" : {
+    "(잠들었을 때)" : {
       "localizations" : {
-        "ko" : {
+        "en" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$lld/%2$lld"
+            "state" : "translated",
+            "value" : "(asleep)"
           }
         }
       }
+    },
+    "%@님이 깨웠어요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ nudged you"
+          }
+        }
+      }
+    },
+    "%@을(를) 켰네요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You opened %@"
+          }
+        }
+      }
+    },
+    "%lld" : {
+
     },
     "%lld분" : {
       "extractionState" : "manual",
@@ -21,6 +41,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld min"
+          }
+        }
+      }
+    },
+    "%lld분째 조용해요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quiet for %lld minutes"
           }
         }
       }
@@ -54,6 +84,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld days"
+          }
+        }
+      }
+    },
+    "%lld초 뒤 집중 시작" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Focus starts in %lld"
           }
         }
       }
@@ -122,6 +162,16 @@
     "v%@" : {
 
     },
+    "Xcode, VS Code처럼 작업할 때 켜는 앱을 골라주세요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pick the apps you open when you work, like Xcode or VS Code"
+          }
+        }
+      }
+    },
     "건너뛰기" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -129,6 +179,126 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Skip"
+          }
+        }
+      }
+    },
+    "계속" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep going"
+          }
+        }
+      }
+    },
+    "계정과 친구는 그대로 두고 주고받기만 쉽니다" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keeps your account and friends; only syncing stops"
+          }
+        }
+      }
+    },
+    "계정을 만들지 않아요. 오늘 몇 세션 했는지와 펫 그림만 오갑니다." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No account needed. Only today's focus time and your pet image are shared."
+          }
+        }
+      }
+    },
+    "그런 코드를 가진 사람이 없어요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No one has that code"
+          }
+        }
+      }
+    },
+    "그룹 만들기" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New group"
+          }
+        }
+      }
+    },
+    "그룹 없애기 (친구는 그대로 남아요)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete group (friends stay)"
+          }
+        }
+      }
+    },
+    "그룹 없음" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ungrouped"
+          }
+        }
+      }
+    },
+    "그룹 옮기기" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move to group"
+          }
+        }
+      }
+    },
+    "그룹 이름" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Group name"
+          }
+        }
+      }
+    },
+    "그룹만 없앨까요?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete just the group?"
+          }
+        }
+      }
+    },
+    "그룹에서 빼기" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove from group"
+          }
+        }
+      }
+    },
+    "그룹으로 옮기기" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move to group"
           }
         }
       }
@@ -144,6 +314,16 @@
         }
       }
     },
+    "나중에" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Later"
+          }
+        }
+      }
+    },
     "날짜 위에 마우스를 올리면 그날 기록이 표시돼요" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -155,6 +335,36 @@
         }
       }
     },
+    "내 이름" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your name"
+          }
+        }
+      }
+    },
+    "내 코드" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your code"
+          }
+        }
+      }
+    },
+    "내 코드는 추가할 수 없어요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You can't add your own code"
+          }
+        }
+      }
+    },
     "눌러서 다운로드 페이지 열기" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -162,6 +372,116 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tap to open the download page"
+          }
+        }
+      }
+    },
+    "다시 고르기" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pick another"
+          }
+        }
+      }
+    },
+    "다시 시작" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resume"
+          }
+        }
+      }
+    },
+    "만든 뒤 친구를 우클릭해서 옮기면 돼요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Once created, right-click a friend to move them in"
+          }
+        }
+      }
+    },
+    "멈춤" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paused"
+          }
+        }
+      }
+    },
+    "메뉴바" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menu bar"
+          }
+        }
+      }
+    },
+    "바꿔도 연속 기록과 집중 시간은 그대로예요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your streak and focus time stay the same"
+          }
+        }
+      }
+    },
+    "방금 찔렀어요. 조금 뒤에 다시 해주세요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You just nudged them. Try again in a bit."
+          }
+        }
+      }
+    },
+    "배경 지우기" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove background"
+          }
+        }
+      }
+    },
+    "배경을 지우는 중이에요…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Removing the background…"
+          }
+        }
+      }
+    },
+    "배경을 지웠어요. 캐릭터가 깎였으면 꺼주세요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Background removed. Turn this off if your character got cut."
+          }
+        }
+      }
+    },
+    "배경이 있는 사진은 그 배경까지 도트가 돼요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A photo with a background turns that background into dots too"
           }
         }
       }
@@ -188,6 +508,76 @@
         }
       }
     },
+    "비어 있어요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Empty"
+          }
+        }
+      }
+    },
+    "빼기" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove"
+          }
+        }
+      }
+    },
+    "뺄까요?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove?"
+          }
+        }
+      }
+    },
+    "삭제" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete"
+          }
+        }
+      }
+    },
+    "삭제할까요?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete?"
+          }
+        }
+      }
+    },
+    "새 그룹" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New group"
+          }
+        }
+      }
+    },
+    "새 그룹 만들기…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New group…"
+          }
+        }
+      }
+    },
     "새 버전 %@ 받기" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -210,6 +600,36 @@
         }
       }
     },
+    "서로 6자리 코드를 입력하면 연결돼요.\n친구 펫이 깨어 있는지 한눈에 보이고, 잠들어 있으면 쿡 찌를 수 있어요." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trade 6-character codes to connect.\nSee at a glance whether your friends' pets are awake, and nudge the sleeping ones."
+          }
+        }
+      }
+    },
+    "서버가 응답하지 않아요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The server isn't responding"
+          }
+        }
+      }
+    },
+    "선택" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose"
+          }
+        }
+      }
+    },
     "설정" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -228,6 +648,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : " sessions"
+          }
+        }
+      }
+    },
+    "아래 내 코드를 친구에게 알려주세요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share your code below with a friend"
+          }
+        }
+      }
+    },
+    "아직 친구가 없어요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No friends yet"
           }
         }
       }
@@ -276,6 +716,26 @@
         }
       }
     },
+    "없애기" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete"
+          }
+        }
+      }
+    },
+    "연동 끄기" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turn off"
+          }
+        }
+      }
+    },
     "연속 기록은 그대로 유지돼요" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -283,6 +743,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Your streak stays intact"
+          }
+        }
+      }
+    },
+    "예전 코드는 못 쓰게 됩니다. 이미 연결된 친구는 그대로예요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The old code stops working. Friends already connected stay connected."
           }
         }
       }
@@ -331,6 +801,36 @@
         }
       }
     },
+    "오늘 집중하면 펫이 깨어나요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Focus today and your pet wakes up"
+          }
+        }
+      }
+    },
+    "오늘도 집중했어요! 연속 유지 중 🔥" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You focused today! Streak going 🔥"
+          }
+        }
+      }
+    },
+    "오늘은 그만 찌르는 게 좋겠어요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "That's enough nudging for today"
+          }
+        }
+      }
+    },
     "이 버전 알림 닫기" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -342,6 +842,56 @@
         }
       }
     },
+    "이걸로 할게요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use this one"
+          }
+        }
+      }
+    },
+    "이렇게 보여요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Here's how it looks"
+          }
+        }
+      }
+    },
+    "이름" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Name"
+          }
+        }
+      }
+    },
+    "이름 바꾸기" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rename"
+          }
+        }
+      }
+    },
+    "이미 친구예요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Already friends"
+          }
+        }
+      }
+    },
     "이미지 선택" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -349,6 +899,76 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Choose image"
+          }
+        }
+      }
+    },
+    "인터넷에 연결되어 있는지 확인해주세요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Check your internet connection"
+          }
+        }
+      }
+    },
+    "자리 비우셨나요?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stepped away?"
+          }
+        }
+      }
+    },
+    "작업 시작" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auto-start"
+          }
+        }
+      }
+    },
+    "작업 시작하면 자동으로" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start focus automatically"
+          }
+        }
+      }
+    },
+    "작업 앱 추가" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add work app"
+          }
+        }
+      }
+    },
+    "잠든 펫을 깨워주세요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wake up their sleeping pet"
+          }
+        }
+      }
+    },
+    "잠시 멈추기" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pause"
           }
         }
       }
@@ -386,6 +1006,36 @@
         }
       }
     },
+    "정말 끌까요?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Really turn it off?"
+          }
+        }
+      }
+    },
+    "정말 바꿀까요?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Really change it?"
+          }
+        }
+      }
+    },
+    "정해둔 앱을 켜면 3초 뒤 집중이 시작돼요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opening an app you picked starts focus 3 seconds later"
+          }
+        }
+      }
+    },
     "좋아하는 캐릭터 이미지를 도트로 바꿔서,\n매일 공부하면 깨어나고 연속 기록이 쌓여요" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -415,6 +1065,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Stop"
+          }
+        }
+      }
+    },
+    "중지" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stop"
+          }
+        }
+      }
+    },
+    "지금 시작" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start now"
           }
         }
       }
@@ -452,6 +1122,16 @@
         }
       }
     },
+    "집중 중" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Focusing"
+          }
+        }
+      }
+    },
     "집중 중…" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -459,6 +1139,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Focusing…"
+          }
+        }
+      }
+    },
+    "집중하는 동안 펫도 깨어 있어요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your pet stays awake while you focus"
           }
         }
       }
@@ -529,6 +1219,146 @@
         }
       }
     },
+    "추가" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add"
+          }
+        }
+      }
+    },
+    "친구" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Friends"
+          }
+        }
+      }
+    },
+    "친구 끊기" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove friend"
+          }
+        }
+      }
+    },
+    "친구 목록에서도 사라지고 코드가 바뀝니다. 되돌릴 수 없어요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You'll disappear from friends' lists and your code changes. This can't be undone."
+          }
+        }
+      }
+    },
+    "친구 연동" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Friend sync"
+          }
+        }
+      }
+    },
+    "친구 연동 켜기" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turn on friend sync"
+          }
+        }
+      }
+    },
+    "친구 연동이 켜져 있지 않아요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Friend sync isn't turned on"
+          }
+        }
+      }
+    },
+    "친구 위의 폴더 아이콘으로 그룹을 옮겨요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use the folder icon on a friend to move them"
+          }
+        }
+      }
+    },
+    "친구 코드 6자리" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Friend's 6-character code"
+          }
+        }
+      }
+    },
+    "친구가 아니에요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not a friend"
+          }
+        }
+      }
+    },
+    "친구에게 내 상태가 올라가지 않고, 친구 목록도 갱신되지 않아요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your status isn't shared and your friend list won't refresh"
+          }
+        }
+      }
+    },
+    "친구에게 보일 이름" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Name your friends will see"
+          }
+        }
+      }
+    },
+    "친구에게 이렇게 보여요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This is how friends see you"
+          }
+        }
+      }
+    },
+    "친구와 같이 키우기" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grow together with friends"
+          }
+        }
+      }
+    },
     "캐릭터" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -551,6 +1381,46 @@
         }
       }
     },
+    "코드 복사" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copy code"
+          }
+        }
+      }
+    },
+    "코드 새로 받기" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Get a new code"
+          }
+        }
+      }
+    },
+    "코드는 6자리예요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Codes are 6 characters"
+          }
+        }
+      }
+    },
+    "쿡" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nudge"
+          }
+        }
+      }
+    },
     "키울 캐릭터를 올려줘" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -558,6 +1428,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Upload a character to raise"
+          }
+        }
+      }
+    },
+    "타이머" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Timer"
+          }
+        }
+      }
+    },
+    "타이머 저장" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save timer"
           }
         }
       }
@@ -580,6 +1470,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "A transparent-background PNG makes just the character stand out"
+          }
+        }
+      }
+    },
+    "피사체를 찾지 못해 원본 그대로 씁니다" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No subject found, so the original is used as is"
           }
         }
       }

@@ -215,7 +215,7 @@ final class FriendStore: ObservableObject {
         guard let identity else { return false }
         let cleaned = code.uppercased().filter { $0.isLetter || $0.isNumber }
         guard cleaned.count == 6 else {
-            lastError = String(localized: "코드는 6자리예요")
+            lastError = appString("코드는 6자리예요")
             return false
         }
         isBusy = true

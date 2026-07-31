@@ -31,6 +31,7 @@ final class WorkAppWatcher: ObservableObject {
 
     private var observer: NSObjectProtocol?
     private var dwellTask: Task<Void, Never>?
+    private var recheckTimer: Timer?
     private var snoozedUntil: Date?
 
     /// 그날 "나중에" 를 누른 횟수. 계속 거절하면 그날은 그만 묻습니다.
@@ -43,6 +44,8 @@ final class WorkAppWatcher: ObservableObject {
     private static let afterDismiss: TimeInterval = 30 * 60
     /// 하루에 이만큼 연달아 거절하면 그날은 더 묻지 않습니다.
     private static let maxDeclinesPerDay = 3
+    /// 작업 앱에 계속 머무는 경우를 위해 이 주기로 다시 살펴봅니다.
+    private static let recheckInterval: TimeInterval = 60
 
     init() {
         settings = AutoStartSettings.load()
@@ -63,6 +66,23 @@ final class WorkAppWatcher: ObservableObject {
             let bundleID = app?.bundleIdentifier
             Task { @MainActor [weak self] in self?.appDidActivate(bundleID) }
         }
+
+        // 알림은 "앱이 앞으로 나오는 순간" 에만 옵니다.
+        // 그래서 이미 작업 앱을 켜둔 채로 Pomopet 이 시작되면(업데이트 직후가 그렇습니다)
+        // 전환이 일어나지 않아 아무 일도 생기지 않습니다. 지금 맨 앞 앱을 한 번 확인합니다.
+        appDidActivate(NSWorkspace.shared.frontmostApplication?.bundleIdentifier)
+
+        // 전환 알림만으로는 부족합니다.
+        // 작업 앱에서 계속 일하는 중이면(세션이 끝난 뒤 이어서 작업하는 경우가 그렇습니다)
+        // 전환이 일어나지 않아 영영 물어보지 않게 됩니다. 주기적으로 지금 상황을 다시 봅니다.
+        let timer = Timer(timeInterval: Self.recheckInterval, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.appDidActivate(NSWorkspace.shared.frontmostApplication?.bundleIdentifier)
+            }
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        recheckTimer = timer
     }
 
     func stop() {
@@ -70,6 +90,8 @@ final class WorkAppWatcher: ObservableObject {
             NSWorkspace.shared.notificationCenter.removeObserver(observer)
         }
         observer = nil
+        recheckTimer?.invalidate()
+        recheckTimer = nil
         dwellTask?.cancel()
         dwellTask = nil
     }
@@ -128,6 +150,7 @@ final class WorkAppWatcher: ObservableObject {
             guard !Task.isCancelled else { return }
 
             // 기다리는 동안 상황이 바뀌었을 수 있으니 다시 확인합니다.
+            // 기다리는 동안 상황이 바뀌었을 수 있으니 다시 확인합니다.
             guard NSWorkspace.shared.frontmostApplication?.bundleIdentifier == target.bundleID,
                   self.shouldAsk()
             else { return }
@@ -144,7 +167,12 @@ final class WorkAppWatcher: ObservableObject {
         if let snoozedUntil, snoozedUntil > Date() { return false }
         if let stopped = controller.lastManualStop,
            Date().timeIntervalSince(stopped) < Self.afterManualStop { return false }
-        if settings.skipWhenGoalMet, controller.isActiveToday { return false }
+
+        // "오늘 목표를 채웠으면 그만" 조건이 있었지만 뺐습니다.
+        // 하루 목표가 없어진 지금은 오늘 한 번이라도 집중하면 곧바로 활성이 되어,
+        // 첫 세션 이후로는 종일 물어보지 않는 꼴이 됩니다.
+        // 하루에 몇 번씩 작업을 시작하는 게 정상이므로 계속 물어보고,
+        // 성가심은 "나중에" 를 세 번 누르면 그날은 그만두는 쪽으로 막습니다.
 
         return true
     }

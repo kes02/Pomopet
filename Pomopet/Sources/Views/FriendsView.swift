@@ -434,7 +434,7 @@ struct FriendsView: View {
         let assigned = Set(store.groups.flatMap(\.codes))
         let rest = store.friends.filter { !assigned.contains($0.code) }
         if !rest.isEmpty {
-            result.append(Section(id: "none", title: String(localized: "그룹 없음"), groupID: nil, friends: rest))
+            result.append(Section(id: "none", title: appString("그룹 없음"), groupID: nil, friends: rest))
         }
         return result
     }
@@ -544,7 +544,7 @@ struct FriendRow: View {
                         }
                         if !store.groups.isEmpty { Divider() }
                         Button("새 그룹 만들기…") {
-                            let group = store.createGroup(named: String(localized: "새 그룹"))
+                            let group = store.createGroup(named: appString("새 그룹"))
                             store.assign(code: friend.code, to: group.id)
                         }
                         if store.group(of: friend.code) != nil {
@@ -600,7 +600,7 @@ struct FriendRow: View {
                 }
                 if !store.groups.isEmpty { Divider() }
                 Button("새 그룹 만들기…") {
-                    let group = store.createGroup(named: String(localized: "새 그룹"))
+                    let group = store.createGroup(named: appString("새 그룹"))
                     store.assign(code: friend.code, to: group.id)
                 }
                 if store.group(of: friend.code) != nil {

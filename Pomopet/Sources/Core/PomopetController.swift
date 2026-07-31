@@ -58,8 +58,27 @@ final class PomopetController: ObservableObject {
     /// 오늘 날짜 키(yyyyMMdd). 친구 연동에서 사용.
     var todayDayKey: Int { Self.dayKey(for: Date()) }
 
-    /// 오늘 누적 집중 시간(분). 친구 연동에서 사용.
-    var todayMinutes: Int { dayStats[todayDayKey]?.minutes ?? 0 }
+    /// 오늘 누적 집중 시간(분). 지금 진행 중인 세션의 흘러간 시간도 함께 셉니다.
+    ///
+    /// 기록에는 세션이 끝나야 더해지는데, 그것만 보면 30분째 집중하는 중에도 "오늘 0분"
+    /// 으로 보입니다. 진행 중인 만큼을 얹어 실제로 한 만큼이 보이게 합니다.
+    /// (세션이 끝나면 그 시간이 기록으로 옮겨가고 running 이 비워지므로 중복되지 않습니다)
+    var todayMinutes: Int {
+        (dayStats[todayDayKey]?.minutes ?? 0) + liveFocusMinutes
+    }
+
+    /// 지금 돌고 있는 집중 세션에서 흘러간 시간(분).
+    private var liveFocusMinutes: Int {
+        guard phase == .focusing, let running else { return 0 }
+        return max(0, Int(Date().timeIntervalSince(running.startedAt)) / 60)
+    }
+
+    /// 펫이 깨어 있는지.
+    /// 오늘 이미 집중했거나, 지금 집중하는 중이면 깨어 있습니다 —
+    /// 공부하는 동안 펫이 자고 있으면 앞뒤가 안 맞습니다.
+    var isPetAwake: Bool {
+        isActiveToday || phase == .focusing
+    }
 
     /// 진행 상황이나 타이머 단계가 바뀌면 알립니다.
     /// 친구 연동이 켜져 있으면 이 신호로 서버에 즉시 반영합니다(꺼져 있으면 아무 일도 일어나지 않음).
