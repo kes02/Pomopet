@@ -150,7 +150,7 @@ struct SettingsView: View {
             )) {
                 VStack(alignment: .leading, spacing: 1) {
                     Text("작업 시작하면 자동으로").font(.callout)
-                    Text("정해둔 앱을 켜면 3초 뒤 집중이 시작돼요")
+                    Text("정해둔 앱을 켜면 \(workWatcher.settings.countdownSeconds)초 뒤 집중이 시작돼요")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }

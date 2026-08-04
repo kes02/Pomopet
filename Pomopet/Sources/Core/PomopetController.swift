@@ -206,8 +206,12 @@ final class PomopetController: ObservableObject {
         halt(idleMinutes: idleMinutes)
     }
 
+    /// 휴식을 건너뛰거나 끝냅니다.
+    ///
+    /// "직접 멈춤" 으로 치지 않습니다. 집중을 그만둔 게 아니라 쉬는 걸 그만둔 것이라,
+    /// 이걸 중단으로 기록하면 이어서 작업하려는 사람에게 15분 동안 시작 제안이 막힙니다.
     func skipBreak() {
-        halt(idleMinutes: 0)
+        halt(idleMinutes: 0, markManualStop: false)
     }
 
     /// 타이머를 멈추고, 집중 중이었다면 흘러간 시간을 기록에 반영합니다.
@@ -215,7 +219,7 @@ final class PomopetController: ObservableObject {
     /// 세션 수는 올리지 않습니다. 세션은 하루 목표·스트릭의 단위라, 완주하지 않은 것을
     /// 한 세션으로 치면 목표가 헐거워집니다. 반면 집중한 시간 자체는 실제로 한 일이라
     /// 누적 시간과 그날 기록에는 남기는 게 맞습니다.
-    private func halt(idleMinutes: Int) {
+    private func halt(idleMinutes: Int, markManualStop: Bool = true) {
         clearRunningSession()
 
         if phase == .focusing {
@@ -229,7 +233,7 @@ final class PomopetController: ObservableObject {
         stopTicking()
         phase = .idle
         remainingSeconds = 0
-        lastManualStop = Date()
+        if markManualStop { lastManualStop = Date() }
         onProgressChanged?()
     }
 

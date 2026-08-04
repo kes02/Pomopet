@@ -74,7 +74,7 @@ struct PomopetApp: App {
         watcher.onSuggest = { [weak controller, weak watcher] appName in
             presenter.show(
                 appName: appName,
-                countdown: watcher?.settings.countdownSeconds ?? 3,
+                countdown: watcher?.settings.countdownSeconds ?? AutoStartSettings.default.countdownSeconds,
                 onStart: {
                     watcher?.noteAccepted()
                     controller?.startFocus()

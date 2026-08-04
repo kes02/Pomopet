@@ -1026,12 +1026,12 @@
         }
       }
     },
-    "정해둔 앱을 켜면 3초 뒤 집중이 시작돼요" : {
+    "정해둔 앱을 켜면 %lld초 뒤 집중이 시작돼요" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Opening an app you picked starts focus 3 seconds later"
+            "value" : "Opening an app you picked starts focus %lld seconds later"
           }
         }
       }

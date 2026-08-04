@@ -36,9 +36,12 @@ struct AutoStartSettings: Codable, Equatable {
         enabled: false,
         apps: [],
         dwellSeconds: 10,
-        countdownSeconds: 3,
+        countdownSeconds: 5,
         skipWhenGoalMet: true
     )
+
+    /// 예전 기본 카운트다운. 저장본에 이 값이 남아 있으면 새 기본값으로 옮깁니다.
+    private static let legacyCountdownSeconds = 3
 
     // 나중에 항목이 늘어도 예전 저장본을 계속 읽을 수 있게, 없는 값은 기본값으로 채웁니다.
     // (필수 항목으로 두면 항목을 하나 추가할 때마다 사용자의 앱 목록이 통째로 초기화됩니다)
@@ -60,8 +63,13 @@ struct AutoStartSettings: Codable, Equatable {
         enabled = try c.decodeIfPresent(Bool.self, forKey: .enabled) ?? fallback.enabled
         apps = try c.decodeIfPresent([TriggerApp].self, forKey: .apps) ?? fallback.apps
         dwellSeconds = try c.decodeIfPresent(Int.self, forKey: .dwellSeconds) ?? fallback.dwellSeconds
-        countdownSeconds = try c.decodeIfPresent(Int.self, forKey: .countdownSeconds) ?? fallback.countdownSeconds
         skipWhenGoalMet = try c.decodeIfPresent(Bool.self, forKey: .skipWhenGoalMet) ?? fallback.skipWhenGoalMet
+
+        // 카운트다운은 설정 화면에 없는 값이라, 저장본에 남은 3초는 사용자가 고른 값이 아니라
+        // 예전 기본값입니다. 3초는 "나중에" 를 누르기에 짧아서 기본값을 5초로 올렸고,
+        // 예전 기본값이 그대로 남아 있으면 새 기본값으로 옮겨줍니다.
+        let saved = try c.decodeIfPresent(Int.self, forKey: .countdownSeconds) ?? fallback.countdownSeconds
+        countdownSeconds = (saved == Self.legacyCountdownSeconds) ? fallback.countdownSeconds : saved
     }
 
     static let storageKey = "pomopet.autoStart"

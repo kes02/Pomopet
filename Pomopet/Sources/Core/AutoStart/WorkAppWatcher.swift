@@ -161,7 +161,12 @@ final class WorkAppWatcher: ObservableObject {
 
     private func shouldAsk() -> Bool {
         guard settings.enabled, let controller else { return false }
-        guard controller.phase == .idle else { return false }        // 이미 돌고 있으면 끼어들지 않음
+
+        // 타이머가 돌고 있으면 끼어들지 않습니다.
+        // 다만 breakReady(집중은 끝났고 휴식은 아직 안 누른 상태)는 돌고 있는 게 아니라
+        // 대답을 기다리는 상태입니다. 휴식을 건너뛰고 곧장 이어서 작업하는 사람에게는
+        // 이 상태가 무한정 유지되어 영영 물어보지 않는 꼴이 됩니다.
+        guard controller.phase == .idle || controller.phase == .breakReady else { return false }
         guard !controller.needsCharacter else { return false }       // 캐릭터도 안 올린 상태면 아직 이르다
 
         if let snoozedUntil, snoozedUntil > Date() { return false }
