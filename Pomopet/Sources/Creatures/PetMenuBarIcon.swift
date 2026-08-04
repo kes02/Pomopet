@@ -67,14 +67,27 @@ enum PetMenuBarIcon {
         return result
     }
 
+    /// 여백을 찾을 때 훑는 비트맵 한 변(px).
+    private static let scanSide = 64
+
+    /// 불투명한 칸이 차지하는 사각형(비트맵 픽셀 좌표, 위에서 아래로).
+    private typealias PixelBox = (minX: Int, maxX: Int, minY: Int, maxY: Int)
+
     /// 실제로 그림이 있는 영역(투명하지 않은 부분)을 이미지 좌표계로 돌려줍니다.
     private static func opaqueBounds(of image: NSImage) -> NSRect? {
-        let side = 64
-        guard let rep = ImagePixelizer.bitmap(from: image, side: side) else { return nil }
+        guard image.size.width > 0, image.size.height > 0,
+              let rep = ImagePixelizer.bitmap(from: image, side: scanSide),
+              let box = opaquePixelBox(in: rep)
+        else { return nil }
 
-        var minX = side, maxX = -1, minY = side, maxY = -1
-        for y in 0..<side {
-            for x in 0..<side {
+        return imageRect(of: box, in: image.size)
+    }
+
+    /// 비트맵을 훑어 불투명한 칸이 차지하는 범위를 찾습니다. 전부 투명하면 nil.
+    private static func opaquePixelBox(in rep: NSBitmapImageRep) -> PixelBox? {
+        var minX = scanSide, maxX = -1, minY = scanSide, maxY = -1
+        for y in 0..<scanSide {
+            for x in 0..<scanSide {
                 guard let color = rep.colorAt(x: x, y: y)?.usingColorSpace(.deviceRGB),
                       color.alphaComponent >= 0.25 else { continue }
                 minX = min(minX, x); maxX = max(maxX, x)
@@ -82,14 +95,29 @@ enum PetMenuBarIcon {
             }
         }
         guard maxX >= minX, maxY >= minY else { return nil }
+        return (minX, maxX, minY, maxY)
+    }
 
-        // rep 은 위에서 아래로(y 증가), NSImage 는 아래에서 위로 좌표를 셉니다. 뒤집어 줍니다.
-        let scale = image.size.width / CGFloat(side)
+    /// 비트맵 픽셀 좌표를 원본 이미지 좌표로 되돌립니다.
+    ///
+    /// 비트맵은 원본을 비율 그대로 정사각형 안에 넣고 남는 자리를 비워둔 것입니다.
+    /// 그래서 되돌릴 때는 그 빈 자리(위아래 또는 좌우 여백)를 먼저 빼야 합니다.
+    /// 가로 비율만으로 환산하면 정사각형이 아닌 사진에서 세로 위치가 통째로 밀려,
+    /// 미리보기에 캐릭터의 절반만 나옵니다.
+    private static func imageRect(of box: PixelBox, in imageSize: NSSize) -> NSRect {
+        let side = CGFloat(scanSide)
+        let fit = min(side / imageSize.width, side / imageSize.height)
+        let insetX = (side - imageSize.width * fit) / 2
+        let insetY = (side - imageSize.height * fit) / 2
+
+        // 비트맵은 위에서 아래로(y 증가), NSImage 는 아래에서 위로 좌표를 셉니다. 뒤집어 줍니다.
+        let bottomUpY = CGFloat(scanSide - 1 - box.maxY)
+
         return NSRect(
-            x: CGFloat(minX) * scale,
-            y: CGFloat(side - 1 - maxY) * scale,
-            width: CGFloat(maxX - minX + 1) * scale,
-            height: CGFloat(maxY - minY + 1) * scale
+            x: (CGFloat(box.minX) - insetX) / fit,
+            y: (bottomUpY - insetY) / fit,
+            width: CGFloat(box.maxX - box.minX + 1) / fit,
+            height: CGFloat(box.maxY - box.minY + 1) / fit
         )
     }
 

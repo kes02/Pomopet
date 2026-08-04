@@ -50,6 +50,8 @@ final class FriendStore: ObservableObject {
     private static let petHashKey = "pomopet.uploadedPetHash"
     private static let serverKey = "pomopet.friendServerURL"
     private static let syncInterval: TimeInterval = 60
+    /// 같은 친구를 다시 찌르기까지. 서버(NUDGE_COOLDOWN)와 같은 값이어야 합니다.
+    private static let nudgeCooldown: TimeInterval = 10 * 60
 
     private var client: FriendClient {
         let url = UserDefaults.standard.string(forKey: Self.serverKey)
@@ -107,6 +109,7 @@ final class FriendStore: ObservableObject {
         isConnected = false
         friends = []
         incomingNudge = nil
+        recentlyNudged = []
         lastUploadedPetHash = nil
         lastError = nil
     }
@@ -284,11 +287,26 @@ final class FriendStore: ObservableObject {
         guard let identity, !recentlyNudged.contains(code) else { return }
         do {
             try await client.nudge(secret: identity.secret, code: code)
-            recentlyNudged.insert(code)
+            lockNudge(code, for: Self.nudgeCooldown)
             lastError = nil
         } catch {
             lastError = error.localizedDescription
-            if case FriendClientError.tooSoon = error { recentlyNudged.insert(code) }
+            // 서버가 "아직 이르다" 며 남은 시간을 알려줍니다. 그만큼만 잠급니다.
+            if case FriendClientError.tooSoon(let retryAfter) = error {
+                lockNudge(code, for: max(retryAfter, 1))
+            }
+        }
+    }
+
+    /// 찌르기 버튼을 잠갔다가 시간이 지나면 스스로 풉니다.
+    ///
+    /// 서버가 같은 친구를 다시 찌르는 걸 10분간 막기 때문에, 그동안은 눌러도 실패합니다.
+    /// 다만 풀어주는 쪽이 없으면 앱을 껐다 켤 때까지 영영 잠긴 채로 남습니다.
+    private func lockNudge(_ code: String, for seconds: TimeInterval) {
+        recentlyNudged.insert(code)
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+            self?.recentlyNudged.remove(code)
         }
     }
 
