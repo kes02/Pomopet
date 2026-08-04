@@ -418,7 +418,7 @@ struct SettingsView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // 작업 앱을 켜면 집중 시작을 권하는 기능. 마음대로 시작하지 않고 물어보기만 합니다.
+    // 작업 앱을 켜면 집중을 시작해주는 기능.
     private var autoStartRow: some View {
         VStack(spacing: 6) {
             sectionTitle("작업 시작")
@@ -439,42 +439,15 @@ struct SettingsView: View {
             .controlSize(.mini)
 
             if workWatcher.settings.enabled {
-                VStack(spacing: 4) {
-                    ForEach(workWatcher.settings.apps) { app in
-                        HStack(spacing: 6) {
-                            if let icon = app.icon {
-                                Image(nsImage: icon).resizable().frame(width: 14, height: 14)
-                            }
-                            Text(verbatim: app.name).font(.caption)
-                            Spacer()
-                            if confirmingAppRemoval == app.bundleID {
-                                Text("뺄까요?")
-                                    .font(.system(size: 9))
-                                    .foregroundStyle(.secondary)
-                                Button("빼기") {
-                                    workWatcher.settings.apps.removeAll { $0.bundleID == app.bundleID }
-                                    confirmingAppRemoval = nil
-                                }
-                                .buttonStyle(.borderedProminent)
-                                .controlSize(.mini)
-                                .tint(.red)
-                                Button {
-                                    confirmingAppRemoval = nil
-                                } label: {
-                                    Image(systemName: "xmark").font(.system(size: 8))
-                                }
-                                .buttonStyle(.plain)
-                                .foregroundStyle(.secondary)
-                            } else {
-                                Button {
-                                    confirmingAppRemoval = app.bundleID
-                                } label: {
-                                    Image(systemName: "xmark").font(.system(size: 8))
-                                }
-                                .buttonStyle(.plain)
-                                .foregroundStyle(.secondary)
-                            }
-                        }
+                VStack(spacing: Self.appRowSpacing) {
+                    // 4개까지는 그대로 다 보이고, 그보다 많으면 스크롤됩니다.
+                    // 높이를 줄 수에 딱 맞추지 않고 한 줄이 반쯤 걸치게 두어,
+                    // 아래에 더 있다는 걸 잘린 모습으로 알 수 있게 합니다.
+                    if workWatcher.settings.apps.count > Self.appRowsWithoutScroll {
+                        ScrollView { appRows }
+                            .frame(height: Self.appListHeight)
+                    } else {
+                        appRows
                     }
 
                     Button {
@@ -498,6 +471,58 @@ struct SettingsView: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
+            }
+        }
+    }
+
+    /// 스크롤 없이 다 보여줄 작업 앱 수.
+    private static let appRowsWithoutScroll = 4
+    /// 한 줄 높이(아이콘 14 + 위아래 여백)와 줄 사이 간격.
+    private static let appRowHeight: CGFloat = 20
+    private static let appRowSpacing: CGFloat = 4
+    /// 네 줄 반이 보이는 높이. 다섯 번째가 반쯤 잘려 더 있다는 게 드러납니다.
+    private static let appListHeight: CGFloat = appRowHeight * 4.5 + appRowSpacing * 4
+
+    private var appRows: some View {
+        VStack(spacing: Self.appRowSpacing) {
+            ForEach(workWatcher.settings.apps) { app in
+                HStack(spacing: 6) {
+                    if let icon = app.icon {
+                        Image(nsImage: icon).resizable().frame(width: 14, height: 14)
+                    }
+                    Text(verbatim: app.name).font(.caption).lineLimit(1)
+
+                    Spacer()
+
+                    if confirmingAppRemoval == app.bundleID {
+                        Text("뺄까요?")
+                            .font(.system(size: 9))
+                            .foregroundStyle(.secondary)
+                        Button("빼기") {
+                            workWatcher.settings.apps.removeAll { $0.bundleID == app.bundleID }
+                            confirmingAppRemoval = nil
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.mini)
+                        .tint(.red)
+                        Button {
+                            confirmingAppRemoval = nil
+                        } label: {
+                            Image(systemName: "xmark").font(.system(size: 8))
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(.secondary)
+                    } else {
+                        Button {
+                            confirmingAppRemoval = app.bundleID
+                        } label: {
+                            Image(systemName: "xmark").font(.system(size: 8))
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(.secondary)
+                    }
+                }
+                .frame(height: Self.appRowHeight)
             }
         }
     }
