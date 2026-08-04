@@ -40,10 +40,11 @@ struct TimerSettings: Codable, Equatable {
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        focusMinutes = try c.decodeIfPresent(Int.self, forKey: .focusMinutes) ?? 25
+        let fallback = Self.default
+        focusMinutes = try c.decodeIfPresent(Int.self, forKey: .focusMinutes) ?? fallback.focusMinutes
         breakMinutes = (try? c.decodeIfPresent(Int.self, forKey: .breakMinutes)) ?? nil
             ?? (try? c.decodeIfPresent(Int.self, forKey: .shortBreakMinutes)) ?? nil
-            ?? 5
+            ?? fallback.breakMinutes
     }
 
     func encode(to encoder: Encoder) throws {
@@ -56,17 +57,10 @@ struct TimerSettings: Codable, Equatable {
     static let storageKey = "pomopet.timerSettings"
 
     func save() {
-        if let data = try? JSONEncoder().encode(self) {
-            UserDefaults.standard.set(data, forKey: Self.storageKey)
-        }
+        DefaultsStore.save(self, forKey: Self.storageKey)
     }
 
     static func load() -> TimerSettings {
-        guard let data = UserDefaults.standard.data(forKey: storageKey),
-              let decoded = try? JSONDecoder().decode(TimerSettings.self, from: data)
-        else {
-            return .default
-        }
-        return decoded
+        DefaultsStore.load(TimerSettings.self, forKey: storageKey) ?? .default
     }
 }

@@ -44,6 +44,35 @@ final class StartSuggestionPresenter {
         )
     }
 
+    // MARK: 집중이 끝났을 때
+
+    /// 세션이 끝나면 알려줍니다.
+    ///
+    /// 끝나는 순간에는 대개 작업하던 화면을 보고 있어서, 메뉴바 숫자가 사라진 것만으로는
+    /// 끝난 걸 알아채지 못합니다. 그러면 휴식으로 넘어갈 기회 자체가 없습니다.
+    /// 대답이 없으면 아무것도 하지 않습니다 — 휴식은 강요할 일이 아닙니다.
+    func showBreakReady(
+        breakMinutes: Int,
+        onStart: @escaping () -> Void,
+        onSkip: @escaping () -> Void
+    ) {
+        present(
+            visibleSeconds: 30,
+            onIgnore: {},
+            card: { dismiss in
+                AnyView(PromptCard(
+                    title: "집중 완료! 잘했어요 🎉",
+                    subtitle: "\(breakMinutes)분 쉬어갈까요?",
+                    primary: "휴식 시작",
+                    primaryIcon: "cup.and.saucer.fill",
+                    secondary: "건너뛰기",
+                    onPrimary: { onStart(); dismiss() },
+                    onSecondary: { onSkip(); dismiss() }
+                ))
+            }
+        )
+    }
+
     // MARK: 자리 비운 것 같을 때
 
     func showAway(
@@ -137,6 +166,85 @@ final class StartSuggestionPresenter {
     }
 }
 
+// MARK: - 카드 조각
+//
+// 떠 있는 카드는 전부 같은 모양입니다 — 펫과 두 줄 글, 그 아래 버튼 둘.
+// 모양은 여기 한 곳에 두고, 카드마다 다른 것(무슨 말을 하고 무엇을 하는지)만 각자 갖습니다.
+
+/// 껍데기 — 여백·배경·너비.
+struct CardShell<Content: View>: View {
+    private let content: Content
+
+    init(@ViewBuilder content: () -> Content) {
+        self.content = content()
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) { content }
+            .padding(12)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(.regularMaterial)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .strokeBorder(Color.primary.opacity(0.12), lineWidth: 1)
+                    )
+            )
+            .frame(width: 260)
+    }
+}
+
+/// 머리 — 펫과 두 줄 글.
+struct CardHeader: View {
+    let title: LocalizedStringKey
+    let subtitle: LocalizedStringKey
+    /// 카운트다운처럼 1초마다 숫자가 바뀌는 글은 폭이 고정돼야 글자가 흔들리지 않습니다.
+    var monospacedDigits = false
+
+    var body: some View {
+        HStack(spacing: 8) {
+            CharacterView(grid: PetVisual.grid() ?? [], tint: PetVisual.tint(), active: true, size: 28)
+
+            VStack(alignment: .leading, spacing: 1) {
+                titleText
+                Text(subtitle)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+        }
+    }
+
+    private var titleText: Text {
+        let styled = Text(title).font(.system(size: 13, weight: .semibold))
+        return monospacedDigits ? styled.monospacedDigit() : styled
+    }
+}
+
+/// 버튼 줄 — 왼쪽이 권하는 쪽, 오른쪽이 물리는 쪽.
+struct CardActions: View {
+    let primary: LocalizedStringKey
+    let primaryIcon: String
+    let secondary: LocalizedStringKey
+    let onPrimary: () -> Void
+    let onSecondary: () -> Void
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Button(action: onPrimary) {
+                Label(primary, systemImage: primaryIcon)
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.small)
+
+            Button(secondary, action: onSecondary)
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+        }
+    }
+}
+
 // MARK: - 집중 시작 카드 (카운트다운)
 //
 // 가만히 두면 시작합니다. 멈추려면 "나중에" 를 눌러야 합니다.
@@ -157,57 +265,35 @@ struct StartCountdownCard: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 8) {
-                CharacterView(grid: PetVisual.grid() ?? [], tint: PetVisual.tint(), active: true, size: 28)
-
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("\(remaining)초 뒤 집중 시작")
-                        .font(.system(size: 13, weight: .semibold))
-                        .monospacedDigit()
-                    Text("\(appName)을(를) 켰네요")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-            }
-
-            HStack(spacing: 6) {
-                Button(action: onStart) {
-                    Label("지금 시작", systemImage: "play.fill")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.small)
-
-                Button("나중에", action: onLater)
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
-            }
+        CardShell {
+            CardHeader(
+                title: "\(remaining)초 뒤 집중 시작",
+                subtitle: "\(appName)을(를) 켰네요",
+                monospacedDigits: true
+            )
+            CardActions(
+                primary: "지금 시작",
+                primaryIcon: "play.fill",
+                secondary: "나중에",
+                onPrimary: onStart,
+                onSecondary: onLater
+            )
         }
-        .padding(12)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(.regularMaterial)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .strokeBorder(Color.primary.opacity(0.12), lineWidth: 1)
-                )
-        )
-        .frame(width: 260)
-        .task {
-            // 카드가 사라지면(= 사용자가 눌렀으면) 이 작업도 취소되어 자동 시작이 일어나지 않습니다.
-            for _ in 0..<seconds {
-                try? await Task.sleep(nanoseconds: 1_000_000_000)
-                if Task.isCancelled { return }
-                remaining -= 1
-            }
-            if !Task.isCancelled { onStart() }
+        .task { await countDownThenStart() }
+    }
+
+    /// 카드가 사라지면(= 사용자가 눌렀으면) 이 작업도 취소되어 자동 시작이 일어나지 않습니다.
+    private func countDownThenStart() async {
+        for _ in 0..<seconds {
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            if Task.isCancelled { return }
+            remaining -= 1
         }
+        if !Task.isCancelled { onStart() }
     }
 }
 
-// MARK: - 카드 내용
+// MARK: - 묻는 카드
 struct PromptCard: View {
     let title: LocalizedStringKey
     let subtitle: LocalizedStringKey
@@ -218,42 +304,15 @@ struct PromptCard: View {
     let onSecondary: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 8) {
-                CharacterView(grid: PetVisual.grid() ?? [], tint: PetVisual.tint(), active: true, size: 28)
-
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(title)
-                        .font(.system(size: 13, weight: .semibold))
-                    Text(subtitle)
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-            }
-
-            HStack(spacing: 6) {
-                Button(action: onPrimary) {
-                    Label(primary, systemImage: primaryIcon)
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.small)
-
-                Button(secondary, action: onSecondary)
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
-            }
+        CardShell {
+            CardHeader(title: title, subtitle: subtitle)
+            CardActions(
+                primary: primary,
+                primaryIcon: primaryIcon,
+                secondary: secondary,
+                onPrimary: onPrimary,
+                onSecondary: onSecondary
+            )
         }
-        .padding(12)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(.regularMaterial)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .strokeBorder(Color.primary.opacity(0.12), lineWidth: 1)
-                )
-        )
-        .frame(width: 260)
     }
 }

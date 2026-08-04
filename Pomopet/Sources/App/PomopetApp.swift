@@ -74,7 +74,7 @@ struct PomopetApp: App {
         watcher.onSuggest = { [weak controller, weak watcher] appName in
             presenter.show(
                 appName: appName,
-                countdown: watcher?.settings.countdownSeconds ?? 3,
+                countdown: watcher?.settings.countdownSeconds ?? AutoStartSettings.default.countdownSeconds,
                 onStart: {
                     watcher?.noteAccepted()
                     controller?.startFocus()
@@ -83,6 +83,17 @@ struct PomopetApp: App {
             )
         }
         watcher.start()
+
+        // 집중이 끝나면 소리와 카드로 알립니다.
+        // 이게 없으면 메뉴바 숫자만 조용히 사라져서, 끝난 줄 모르고 계속 일하게 됩니다.
+        controller.onFocusCompleted = { [weak controller] in
+            SessionChime.playCompletion()
+            presenter.showBreakReady(
+                breakMinutes: controller?.settings.breakMinutes ?? TimerSettings.default.breakMinutes,
+                onStart: { controller?.startBreak() },
+                onSkip: { controller?.skipBreak() }
+            )
+        }
 
         // 자리를 비운 것 같으면 물어봅니다.
         // 대답이 없으면 중지합니다 — 대답이 없다는 건 아직 자리에 없다는 뜻이라,
