@@ -25,14 +25,10 @@ enum FriendGroupStore {
     private static let key = "pomopet.friendGroups"
 
     static func load() -> [FriendGroup] {
-        guard let data = UserDefaults.standard.data(forKey: key),
-              let groups = try? JSONDecoder().decode([FriendGroup].self, from: data)
-        else { return [] }
-        return groups
+        DefaultsStore.load([FriendGroup].self, forKey: key) ?? []
     }
 
     static func save(_ groups: [FriendGroup]) {
-        guard let data = try? JSONEncoder().encode(groups) else { return }
-        UserDefaults.standard.set(data, forKey: key)
+        DefaultsStore.save(groups, forKey: key)
     }
 }

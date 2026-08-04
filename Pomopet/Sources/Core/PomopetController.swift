@@ -46,6 +46,20 @@ final class PomopetController: ObservableObject {
         var startedAt: Date
         var endsAt: Date
         var lastSeen: Date       // 앱이 마지막으로 살아 있던 시각
+
+        /// 이 세션의 계획 길이(분).
+        ///
+        /// 기록은 설정값이 아니라 이 값을 기준으로 삼습니다. 세션이 도는 도중에 설정에서
+        /// 집중 길이를 바꿔도 이미 시작한 세션의 끝나는 시각은 그대로이기 때문에,
+        /// 바뀐 설정으로 계산하면 하지 않은 시간이 기록되거나 한 시간이 사라집니다.
+        var plannedMinutes: Int {
+            max(0, Int(endsAt.timeIntervalSince(startedAt)) / 60)
+        }
+
+        /// 시작한 뒤 주어진 시각까지 실제로 흐른 시간(분).
+        func elapsedMinutes(until moment: Date) -> Int {
+            max(0, Int(moment.timeIntervalSince(startedAt)) / 60)
+        }
     }
 
     private var running: RunningSession?
@@ -70,7 +84,7 @@ final class PomopetController: ObservableObject {
     /// 지금 돌고 있는 집중 세션에서 흘러간 시간(분).
     private var liveFocusMinutes: Int {
         guard phase == .focusing, let running else { return 0 }
-        return max(0, Int(Date().timeIntervalSince(running.startedAt)) / 60)
+        return running.elapsedMinutes(until: Date())
     }
 
     /// 펫이 깨어 있는지.
@@ -83,6 +97,12 @@ final class PomopetController: ObservableObject {
     /// 진행 상황이나 타이머 단계가 바뀌면 알립니다.
     /// 친구 연동이 켜져 있으면 이 신호로 서버에 즉시 반영합니다(꺼져 있으면 아무 일도 일어나지 않음).
     var onProgressChanged: (() -> Void)?
+
+    /// 집중 세션이 끝까지 돌아 휴식 대기로 넘어갔을 때 알립니다.
+    ///
+    /// 끝났다는 걸 알리는 건 컨트롤러의 일이 아니라서(소리를 낼지 창을 띄울지는 화면 쪽 결정)
+    /// 신호만 보내고 무엇을 할지는 앱 조립부에 맡깁니다.
+    var onFocusCompleted: (() -> Void)?
 
     /// 사용자가 직접 타이머를 멈춘 시각.
     /// 작업 시작 감지가 방금 끈 타이머를 곧바로 다시 권하지 않도록 하는 데 씁니다.
@@ -101,9 +121,7 @@ final class PomopetController: ObservableObject {
 
     /// 앱이 꺼지기 전 돌고 있던 세션을 복구합니다.
     private func restoreRunningSession() {
-        guard let data = UserDefaults.standard.data(forKey: Self.runningKey),
-              let saved = try? JSONDecoder().decode(RunningSession.self, from: data)
-        else { return }
+        guard let saved = DefaultsStore.load(RunningSession.self, forKey: Self.runningKey) else { return }
 
         let now = Date()
 
@@ -118,20 +136,22 @@ final class PomopetController: ObservableObject {
 
         // 오래 꺼져 있었으면 완주로 쳐주지 않습니다. 앱이 지켜본 시간만 인정합니다.
         if saved.phase == "focusing" {
-            let observed = Int(saved.lastSeen.timeIntervalSince(saved.startedAt)) / 60
-            recordPartialFocus(minutes: observed >= Self.minimumCreditedMinutes ? observed : 0)
+            recordPartialFocus(minutes: Self.creditedMinutes(
+                elapsedMinutes: saved.elapsedMinutes(until: saved.lastSeen),
+                idleMinutes: 0
+            ))
         }
         clearRunningSession()
     }
 
     private func saveRunningSession() {
-        guard let running, let data = try? JSONEncoder().encode(running) else { return }
-        UserDefaults.standard.set(data, forKey: Self.runningKey)
+        guard let running else { return }
+        DefaultsStore.save(running, forKey: Self.runningKey)
     }
 
     private func clearRunningSession() {
         running = nil
-        UserDefaults.standard.removeObject(forKey: Self.runningKey)
+        DefaultsStore.remove(forKey: Self.runningKey)
     }
 
     private func loadState() {
@@ -206,8 +226,12 @@ final class PomopetController: ObservableObject {
         halt(idleMinutes: idleMinutes)
     }
 
+    /// 휴식을 건너뛰거나 끝냅니다.
+    ///
+    /// "직접 멈춤" 으로 치지 않습니다. 집중을 그만둔 게 아니라 쉬는 걸 그만둔 것이라,
+    /// 이걸 중단으로 기록하면 이어서 작업하려는 사람에게 15분 동안 시작 제안이 막힙니다.
     func skipBreak() {
-        halt(idleMinutes: 0)
+        halt(idleMinutes: 0, markManualStop: false)
     }
 
     /// 타이머를 멈추고, 집중 중이었다면 흘러간 시간을 기록에 반영합니다.
@@ -215,13 +239,13 @@ final class PomopetController: ObservableObject {
     /// 세션 수는 올리지 않습니다. 세션은 하루 목표·스트릭의 단위라, 완주하지 않은 것을
     /// 한 세션으로 치면 목표가 헐거워집니다. 반면 집중한 시간 자체는 실제로 한 일이라
     /// 누적 시간과 그날 기록에는 남기는 게 맞습니다.
-    private func halt(idleMinutes: Int) {
+    private func halt(idleMinutes: Int, markManualStop: Bool = true) {
+        let stopped = running
         clearRunningSession()
 
-        if phase == .focusing {
+        if phase == .focusing, let stopped {
             recordPartialFocus(minutes: Self.creditedMinutes(
-                focusMinutes: settings.focusMinutes,
-                remainingSeconds: remainingSeconds,
+                elapsedMinutes: stopped.elapsedMinutes(until: Date()),
                 idleMinutes: idleMinutes
             ))
         }
@@ -229,7 +253,7 @@ final class PomopetController: ObservableObject {
         stopTicking()
         phase = .idle
         remainingSeconds = 0
-        lastManualStop = Date()
+        if markManualStop { lastManualStop = Date() }
         onProgressChanged?()
     }
 
@@ -237,13 +261,12 @@ final class PomopetController: ObservableObject {
     /// 집중했다고 보기 어렵고, 켰다 껐다 하며 시간을 부풀리는 것도 막습니다.
     static let minimumCreditedMinutes = 5
 
-    /// 멈춘 시점까지 기록에 반영할 집중 시간(분). 기준에 못 미치면 0.
+    /// 흘러간 시간 중 기록에 반영할 집중 시간(분). 기준에 못 미치면 0.
     ///
     /// 자리를 비운 시간(idleMinutes)은 빼고 셉니다 — 비운 시간이 집중 시간으로
     /// 둔갑하면 기록이 부풀기 때문입니다.
-    static func creditedMinutes(focusMinutes: Int, remainingSeconds: Int, idleMinutes: Int) -> Int {
-        let elapsed = max(0, focusMinutes * 60 - remainingSeconds) / 60
-        let credited = max(0, elapsed - idleMinutes)
+    static func creditedMinutes(elapsedMinutes: Int, idleMinutes: Int) -> Int {
+        let credited = max(0, elapsedMinutes - idleMinutes)
         return credited >= minimumCreditedMinutes ? credited : 0
     }
 
@@ -308,12 +331,15 @@ final class PomopetController: ObservableObject {
     // MARK: - 단계 완료 처리
 
     private func handlePhaseCompletion() {
+        let finished = running
         stopTicking()
         clearRunningSession()
+
         switch phase {
         case .focusing:
-            completeFocusSession()
+            completeFocusSession(minutes: finished?.plannedMinutes ?? settings.focusMinutes)
             phase = .breakReady
+            onFocusCompleted?()
         case .resting:
             phase = .idle
         default:
@@ -323,16 +349,16 @@ final class PomopetController: ObservableObject {
     }
 
     /// 집중 세션이 정상 완료되었을 때: 오늘 기록 + 통계 + 스트릭 갱신
-    private func completeFocusSession() {
+    private func completeFocusSession(minutes: Int) {
         guard let context = modelContext else { return }
 
         let record = todayRecord(in: context)
         record.sessions += 1
-        record.minutes += settings.focusMinutes
+        record.minutes += minutes
 
         if let stats = stats {
             stats.totalFocusSessions += 1
-            stats.totalFocusMinutes += settings.focusMinutes
+            stats.totalFocusMinutes += minutes
         }
 
         saveContext()

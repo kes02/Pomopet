@@ -42,10 +42,7 @@ struct CharacterPreview: View {
             // 팝오버에서 보이는 크기
             ZStack {
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(
-                        LinearGradient(colors: [Color(hex: 0x121726), Color(hex: 0x1c2438)],
-                                       startPoint: .top, endPoint: .bottom)
-                    )
+                    .fill(PetScreen.background)
                 ColorGridView(grid: grid, size: 96)
             }
             .frame(height: 130)

@@ -45,6 +45,17 @@
         }
       }
     },
+    "%lld분 쉬어갈까요?" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Take a %lld-minute break?"
+          }
+        }
+      }
+    },
     "%lld분째 조용해요" : {
       "localizations" : {
         "en" : {
@@ -1026,12 +1037,12 @@
         }
       }
     },
-    "정해둔 앱을 켜면 3초 뒤 집중이 시작돼요" : {
+    "정해둔 앱을 켜면 %lld초 뒤 집중이 시작돼요" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Opening an app you picked starts focus 3 seconds later"
+            "value" : "Opening an app you picked starts focus %lld seconds later"
           }
         }
       }
