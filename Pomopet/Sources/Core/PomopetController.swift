@@ -121,9 +121,7 @@ final class PomopetController: ObservableObject {
 
     /// 앱이 꺼지기 전 돌고 있던 세션을 복구합니다.
     private func restoreRunningSession() {
-        guard let data = UserDefaults.standard.data(forKey: Self.runningKey),
-              let saved = try? JSONDecoder().decode(RunningSession.self, from: data)
-        else { return }
+        guard let saved = DefaultsStore.load(RunningSession.self, forKey: Self.runningKey) else { return }
 
         let now = Date()
 
@@ -147,13 +145,13 @@ final class PomopetController: ObservableObject {
     }
 
     private func saveRunningSession() {
-        guard let running, let data = try? JSONEncoder().encode(running) else { return }
-        UserDefaults.standard.set(data, forKey: Self.runningKey)
+        guard let running else { return }
+        DefaultsStore.save(running, forKey: Self.runningKey)
     }
 
     private func clearRunningSession() {
         running = nil
-        UserDefaults.standard.removeObject(forKey: Self.runningKey)
+        DefaultsStore.remove(forKey: Self.runningKey)
     }
 
     private func loadState() {

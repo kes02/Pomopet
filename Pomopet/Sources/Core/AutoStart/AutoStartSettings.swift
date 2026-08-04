@@ -75,19 +75,12 @@ struct AutoStartSettings: Codable, Equatable {
     static let storageKey = "pomopet.autoStart"
 
     func save() {
-        if let data = try? JSONEncoder().encode(self) {
-            UserDefaults.standard.set(data, forKey: Self.storageKey)
-        }
+        DefaultsStore.save(self, forKey: Self.storageKey)
     }
 
+    /// 저장본이 깨졌으면 기본값으로 시작합니다. 원본은 덮어쓰지 않습니다.
     static func load() -> AutoStartSettings {
-        guard let data = UserDefaults.standard.data(forKey: storageKey) else { return .default }
-        do {
-            return try JSONDecoder().decode(AutoStartSettings.self, from: data)
-        } catch {
-            // 여기까지 오면 저장본이 정말 깨진 경우. 기본값으로 시작하되 원본은 덮어쓰지 않습니다.
-            return .default
-        }
+        DefaultsStore.load(AutoStartSettings.self, forKey: storageKey) ?? .default
     }
 }
 

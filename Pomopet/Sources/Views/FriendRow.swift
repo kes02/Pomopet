@@ -167,7 +167,7 @@ struct FriendPetThumb: View {
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 7)
-                .fill(Color(hex: 0x121726))
+                .fill(PetScreen.top)
                 .frame(width: 38, height: 38)
 
             if let grid, !grid.isEmpty {

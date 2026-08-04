@@ -101,12 +101,7 @@ struct PopoverView: View {
 
         return ZStack {
             RoundedRectangle(cornerRadius: 12)
-                .fill(
-                    LinearGradient(
-                        colors: [Color(hex: 0x121726), Color(hex: 0x1c2438)],
-                        startPoint: .top, endPoint: .bottom
-                    )
-                )
+                .fill(PetScreen.background)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
                         .strokeBorder(borderColor.opacity(active ? 0.7 : 0.3), lineWidth: 1.5)
