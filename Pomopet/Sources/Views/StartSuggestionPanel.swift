@@ -44,6 +44,35 @@ final class StartSuggestionPresenter {
         )
     }
 
+    // MARK: 집중이 끝났을 때
+
+    /// 세션이 끝나면 알려줍니다.
+    ///
+    /// 끝나는 순간에는 대개 작업하던 화면을 보고 있어서, 메뉴바 숫자가 사라진 것만으로는
+    /// 끝난 걸 알아채지 못합니다. 그러면 휴식으로 넘어갈 기회 자체가 없습니다.
+    /// 대답이 없으면 아무것도 하지 않습니다 — 휴식은 강요할 일이 아닙니다.
+    func showBreakReady(
+        breakMinutes: Int,
+        onStart: @escaping () -> Void,
+        onSkip: @escaping () -> Void
+    ) {
+        present(
+            visibleSeconds: 30,
+            onIgnore: {},
+            card: { dismiss in
+                AnyView(PromptCard(
+                    title: "집중 완료! 잘했어요 🎉",
+                    subtitle: "\(breakMinutes)분 쉬어갈까요?",
+                    primary: "휴식 시작",
+                    primaryIcon: "cup.and.saucer.fill",
+                    secondary: "건너뛰기",
+                    onPrimary: { onStart(); dismiss() },
+                    onSecondary: { onSkip(); dismiss() }
+                ))
+            }
+        )
+    }
+
     // MARK: 자리 비운 것 같을 때
 
     func showAway(

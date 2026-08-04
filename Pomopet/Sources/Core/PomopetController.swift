@@ -98,6 +98,12 @@ final class PomopetController: ObservableObject {
     /// 친구 연동이 켜져 있으면 이 신호로 서버에 즉시 반영합니다(꺼져 있으면 아무 일도 일어나지 않음).
     var onProgressChanged: (() -> Void)?
 
+    /// 집중 세션이 끝까지 돌아 휴식 대기로 넘어갔을 때 알립니다.
+    ///
+    /// 끝났다는 걸 알리는 건 컨트롤러의 일이 아니라서(소리를 낼지 창을 띄울지는 화면 쪽 결정)
+    /// 신호만 보내고 무엇을 할지는 앱 조립부에 맡깁니다.
+    var onFocusCompleted: (() -> Void)?
+
     /// 사용자가 직접 타이머를 멈춘 시각.
     /// 작업 시작 감지가 방금 끈 타이머를 곧바로 다시 권하지 않도록 하는 데 씁니다.
     private(set) var lastManualStop: Date?
@@ -335,6 +341,7 @@ final class PomopetController: ObservableObject {
         case .focusing:
             completeFocusSession(minutes: finished?.plannedMinutes ?? settings.focusMinutes)
             phase = .breakReady
+            onFocusCompleted?()
         case .resting:
             phase = .idle
         default:

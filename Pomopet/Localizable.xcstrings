@@ -45,6 +45,17 @@
         }
       }
     },
+    "%lld분 쉬어갈까요?" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Take a %lld-minute break?"
+          }
+        }
+      }
+    },
     "%lld분째 조용해요" : {
       "localizations" : {
         "en" : {
