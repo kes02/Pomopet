@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pomopet — 최애를 내 메뉴바에서 키우는 포모도로 타이머</title>
+<meta name="description" content="내가 올린 이미지가 그대로 펫이 되는 macOS 메뉴바 포모도로 타이머. 오늘 집중하면 컬러로 깨어나고, 거르면 흑백으로 잠듭니다. 무료 · 오픈소스.">
+<meta property="og:title" content="Pomopet — 최애를 내 메뉴바에서 키운다">
+<meta property="og:description" content="빌트인 고양이·강아지 중에서 고르는 게 아닙니다. 당신이 올린 이미지가 도트 펫이 됩니다. macOS 메뉴바 포모도로 · 무료 · 오픈소스.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#1a1512">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>">
+<style>
+  :root {
+    --bg: #14100e;
+    --bg-soft: #1e1815;
+    --card: #241d19;
+    --line: #362c26;
+    --fg: #f3ece7;
+    --fg-dim: #b3a49a;
+    --accent: #ff6b4a;
+    --accent-soft: #ffb199;
+    --gold: #ffc857;
+    --radius: 16px;
+    --maxw: 980px;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #fdf8f4; --bg-soft: #f6efe8; --card: #fff; --line: #ecdfd4;
+      --fg: #241b15; --fg-dim: #6d5c50; --accent: #e04f2c; --accent-soft: #a9502f;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard",
+                 "Helvetica Neue", "Segoe UI", Roboto, sans-serif;
+    line-height: 1.65; -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+  section { padding: 84px 0; border-top: 1px solid var(--line); }
+  section:first-of-type { border-top: 0; }
+  h1, h2, h3 { line-height: 1.28; letter-spacing: -0.02em; margin: 0 0 16px; }
+  h1 { font-size: clamp(32px, 5.6vw, 54px); font-weight: 800; }
+  h2 { font-size: clamp(24px, 3.6vw, 34px); font-weight: 750; }
+  h3 { font-size: 18px; font-weight: 700; }
+  p { margin: 0 0 16px; color: var(--fg-dim); }
+  a { color: var(--accent); }
+  .lead { font-size: clamp(16px, 2.1vw, 19px); max-width: 40em; }
+  .eyebrow {
+    display: inline-block; font-size: 13px; font-weight: 700; letter-spacing: .06em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 14px;
+  }
+
+  /* nav */
+  nav {
+    position: sticky; top: 0; z-index: 30; backdrop-filter: blur(14px);
+    background: color-mix(in srgb, var(--bg) 82%, transparent);
+    border-bottom: 1px solid var(--line);
+  }
+  nav .wrap { display: flex; align-items: center; gap: 14px; height: 58px; }
+  .brand { font-weight: 800; letter-spacing: -.02em; margin-right: auto; font-size: 17px; }
+  .brand span { color: var(--accent); }
+  .navlink { color: var(--fg-dim); text-decoration: none; font-size: 14px; font-weight: 600; }
+  .navlink:hover { color: var(--fg); }
+  .langbtn {
+    border: 1px solid var(--line); background: var(--bg-soft); color: var(--fg-dim);
+    border-radius: 999px; padding: 5px 12px; font-size: 13px; font-weight: 700; cursor: pointer;
+    font-family: inherit;
+  }
+  .langbtn:hover { color: var(--fg); border-color: var(--accent); }
+
+  /* hero */
+  .hero { padding: 72px 0 64px; }
+  .hero-grid { display: grid; grid-template-columns: 1.05fr .95fr; gap: 48px; align-items: center; }
+  @media (max-width: 820px) { .hero-grid { grid-template-columns: 1fr; gap: 36px; } }
+  .cta { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 26px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px; text-decoration: none;
+    padding: 11px 20px; border-radius: 999px; font-weight: 700; font-size: 15px;
+    border: 1px solid var(--line); color: var(--fg); background: var(--bg-soft);
+  }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn:hover { transform: translateY(-1px); }
+  .brewline {
+    display: flex; align-items: center; gap: 10px; margin-top: 18px;
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 11px 14px; font-size: 13.5px; overflow-x: auto;
+  }
+  .brewline code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; white-space: nowrap; color: var(--fg); }
+  .copybtn {
+    margin-left: auto; border: 0; background: transparent; color: var(--fg-dim);
+    cursor: pointer; font-size: 12.5px; font-weight: 700; font-family: inherit; white-space: nowrap;
+  }
+  .copybtn:hover { color: var(--accent); }
+  .meta { font-size: 13px; color: var(--fg-dim); margin-top: 14px; }
+
+  /* pixel demo */
+  .demo {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 22px; text-align: center;
+  }
+  .stage {
+    border: 2px dashed var(--line); border-radius: 12px; padding: 18px 14px;
+    transition: border-color .15s, background .15s;
+  }
+  .stage.drag { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); }
+  #petCanvas { width: 208px; height: 208px; image-rendering: pixelated; display: block; margin: 0 auto; }
+  .barsim {
+    display: inline-flex; align-items: center; gap: 6px; margin-top: 14px;
+    background: #0d0b0a; border: 1px solid #3a2f28; border-radius: 8px; padding: 5px 12px;
+  }
+  .barsim canvas { width: 20px; height: 20px; image-rendering: pixelated; }
+  .barsim .streak { font-size: 12.5px; color: #ffd7a8; font-weight: 700; letter-spacing: .01em; }
+  .barsim .cap { font-size: 11px; color: #8b7c72; margin-left: 4px; }
+  .toggles { display: flex; gap: 8px; justify-content: center; margin-top: 18px; flex-wrap: wrap; }
+  .toggle {
+    border: 1px solid var(--line); background: var(--bg-soft); color: var(--fg-dim);
+    padding: 7px 14px; border-radius: 999px; font-size: 13px; font-weight: 700;
+    cursor: pointer; font-family: inherit;
+  }
+  .toggle[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .uploadrow { margin-top: 16px; font-size: 13px; color: var(--fg-dim); }
+  .filelabel {
+    display: inline-block; border: 1px solid var(--accent); color: var(--accent);
+    padding: 8px 16px; border-radius: 999px; font-weight: 700; cursor: pointer; font-size: 13.5px;
+  }
+  .filelabel:hover { background: var(--accent); color: #fff; }
+  input[type=file] { display: none; }
+  .privacy { font-size: 12px; color: var(--fg-dim); margin-top: 12px; }
+
+  /* diff cards */
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 28px; }
+  @media (max-width: 820px) { .cards { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px;
+  }
+  .card .num { font-size: 26px; margin-bottom: 8px; display: block; }
+  .card p { margin: 0; font-size: 14.5px; }
+  .card.hi { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+
+  /* compare table */
+  .cmp { width: 100%; border-collapse: collapse; margin-top: 26px; font-size: 14.5px; }
+  .cmp th, .cmp td { padding: 13px 14px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+  .cmp th { font-weight: 700; color: var(--fg); font-size: 13px; letter-spacing: .02em; }
+  .cmp td:first-child { color: var(--fg); font-weight: 650; width: 34%; }
+  .cmp td { color: var(--fg-dim); }
+  .yes { color: var(--accent); font-weight: 700; }
+  .cmp-scroll { overflow-x: auto; }
+
+  /* shots */
+  .shots { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 28px; align-items: end; }
+  @media (max-width: 820px) { .shots { grid-template-columns: repeat(2, 1fr); } }
+  .shots figure { margin: 0; text-align: center; }
+  .shots img {
+    width: 100%; max-width: 240px; height: auto; border-radius: 12px;
+    border: 1px solid var(--line); background: var(--card);
+  }
+  .shots figcaption { font-size: 12.5px; color: var(--fg-dim); margin-top: 8px; }
+  .barshots { display: flex; gap: 26px; flex-wrap: wrap; margin-top: 24px; }
+  .barshots figure { margin: 0; }
+  .barshots img { height: 34px; width: auto; }
+  .barshots figcaption { font-size: 12.5px; color: var(--fg-dim); margin-top: 8px; }
+
+  /* features */
+  .feats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px 32px; margin-top: 26px; }
+  @media (max-width: 820px) { .feats { grid-template-columns: 1fr; } }
+  .feat { display: flex; gap: 12px; align-items: flex-start; }
+  .feat .ico { font-size: 19px; line-height: 1.4; }
+  .feat b { display: block; font-size: 15px; }
+  .feat span { font-size: 14px; color: var(--fg-dim); }
+
+  /* install */
+  .steps { counter-reset: s; margin-top: 24px; padding: 0; list-style: none; }
+  .steps li {
+    position: relative; padding-left: 40px; margin-bottom: 20px; color: var(--fg-dim); font-size: 15px;
+  }
+  .steps li::before {
+    counter-increment: s; content: counter(s);
+    position: absolute; left: 0; top: 1px; width: 26px; height: 26px; border-radius: 999px;
+    background: var(--accent); color: #fff; font-size: 13px; font-weight: 800;
+    display: grid; place-items: center;
+  }
+  .steps b { color: var(--fg); }
+  pre {
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 14px 16px; overflow-x: auto; font-size: 13.5px; margin: 12px 0 0;
+  }
+  pre code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--fg); }
+  .note {
+    border-left: 3px solid var(--gold); padding: 4px 0 4px 14px; margin-top: 20px;
+    font-size: 14px; color: var(--fg-dim);
+  }
+
+  footer { border-top: 1px solid var(--line); padding: 40px 0 56px; font-size: 13.5px; color: var(--fg-dim); }
+  footer a { color: var(--fg-dim); }
+  footer a:hover { color: var(--accent); }
+  .footlinks { display: flex; gap: 18px; flex-wrap: wrap; margin-bottom: 14px; }
+
+  html[lang="ko"] .en, html[lang="en"] .ko { display: none; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <div class="brand">🐾 Pomo<span>pet</span></div>
+    <a class="navlink" href="#diff"><span class="ko">다른 점</span><span class="en">Why</span></a>
+    <a class="navlink" href="#install"><span class="ko">설치</span><span class="en">Install</span></a>
+    <a class="navlink" href="https://github.com/kes02/Pomopet">GitHub</a>
+    <button class="langbtn" id="langBtn" type="button">EN</button>
+  </div>
+</nav>
+
+<header class="wrap hero">
+  <div class="hero-grid">
+    <div>
+      <span class="eyebrow"><span class="ko">macOS 메뉴바 · 무료 · 오픈소스</span><span class="en">macOS menu bar · free · open source</span></span>
+      <h1>
+        <span class="ko">최애를,<br>내 메뉴바에서 키운다</span>
+        <span class="en">Raise your favorite character<br>in your menu bar</span>
+      </h1>
+      <p class="lead">
+        <span class="ko">다른 펫 포모도로 앱은 <b>준비된 고양이·강아지 중에서 고르게</b> 합니다.
+        Pomopet은 <b>당신이 올린 이미지</b>가 도트로 변환돼 그대로 펫이 됩니다.
+        오늘 집중하면 컬러로 깨어나고, 하루를 거르면 흑백으로 잠듭니다.</span>
+        <span class="en">Other pet pomodoro apps make you <b>pick from their cats and dogs</b>.
+        Pomopet turns <b>the image you upload</b> into a pixel pet.
+        Focus today and it wakes up in color; skip a day and it falls asleep in grayscale.</span>
+      </p>
+      <div class="cta">
+        <a class="btn primary" href="#install">
+          <span class="ko">무료로 받기</span><span class="en">Get it free</span>
+        </a>
+        <a class="btn" href="https://github.com/kes02/Pomopet">
+          <span class="ko">소스 보기</span><span class="en">View source</span>
+        </a>
+      </div>
+      <div class="brewline">
+        <code id="brewCmd">brew install --cask kes02/pomopet/pomopet</code>
+        <button class="copybtn" id="copyBtn" type="button"><span class="ko">복사</span><span class="en">Copy</span></button>
+      </div>
+      <p class="meta">
+        <span class="ko">macOS 14 (Sonoma) 이상 · Apple Silicon + Intel · 계정 없음 · 결제 없음</span>
+        <span class="en">macOS 14 (Sonoma)+ · Apple Silicon &amp; Intel · no account · no payment</span>
+      </p>
+    </div>
+
+    <div class="demo">
+      <div class="stage" id="stage">
+        <canvas id="petCanvas" width="26" height="26" aria-label="pixel pet preview"></canvas>
+        <div class="barsim">
+          <canvas id="barCanvas" width="26" height="26"></canvas>
+          <span class="streak" id="streakText">🔥 12</span>
+          <span class="cap"><span class="ko">메뉴바에서</span><span class="en">in the menu bar</span></span>
+        </div>
+      </div>
+
+      <div class="toggles">
+        <button class="toggle" id="tAwake" type="button" aria-pressed="true">
+          <span class="ko">오늘 집중함 · 깨어남</span><span class="en">Focused today · awake</span>
+        </button>
+        <button class="toggle" id="tAsleep" type="button" aria-pressed="false">
+          <span class="ko">오늘 안 함 · 잠듦</span><span class="en">Skipped today · asleep</span>
+        </button>
+      </div>
+
+      <div class="uploadrow">
+        <label class="filelabel" for="petFile">
+          <span class="ko">🖼️ 내 이미지로 해보기</span><span class="en">🖼️ Try your own image</span>
+        </label>
+        <input type="file" id="petFile" accept="image/*">
+        <p class="privacy">
+          <span class="ko">끌어다 놓아도 됩니다. 앱과 같은 26×26 도트로 변환하며,<br>브라우저 안에서만 처리되고 어디로도 전송되지 않습니다.</span>
+          <span class="en">Drag &amp; drop works too. Converted to the same 26×26 grid the app uses —<br>all in your browser, nothing is uploaded anywhere.</span>
+        </p>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section id="diff" class="wrap">
+  <span class="eyebrow"><span class="ko">다른 점</span><span class="en">What's different</span></span>
+  <h2><span class="ko">펫 포모도로 앱은 많습니다. 세 가지가 다릅니다.</span><span class="en">There are many pet pomodoro apps. Three things set this one apart.</span></h2>
+
+  <div class="cards">
+    <div class="card hi">
+      <span class="num">🖼️</span>
+      <h3><span class="ko">내가 올린 이미지가 펫이 됩니다</span><span class="en">Your image becomes the pet</span></h3>
+      <p>
+        <span class="ko">빌트인 고양이·강아지 중 고르는 게 아니라, 좋아하는 캐릭터를 직접 올려 도트로 키웁니다.
+        올리기 전에 도트와 메뉴바 크기로 미리 보여주고, 배경이 있는 사진은 배경을 자동으로 지웁니다.</span>
+        <span class="en">Not a menu of built-in cats and dogs — upload the character you actually like and raise it as pixel art.
+        You see a preview at pixel and menu-bar size first, and photos with backgrounds can be cut out automatically.</span>
+      </p>
+    </div>
+    <div class="card">
+      <span class="num">😴</span>
+      <h3><span class="ko">안 하면 잠듭니다</span><span class="en">Skip a day, it sleeps</span></h3>
+      <p>
+        <span class="ko">"집중할 때 활성 / 쉴 때 잠듦"이 아닙니다. 오늘 한 번도 집중하지 않으면 캐릭터가 흑백으로 잠듭니다.
+        지키고 싶은 걸 잃지 않으려는 동기로 설계했습니다.</span>
+        <span class="en">Not "awake while focusing, asleep on break." If you don't focus at all today, your character sleeps in grayscale.
+        Built around not losing something you care about.</span>
+      </p>
+    </div>
+    <div class="card">
+      <span class="num">🆓</span>
+      <h3><span class="ko">무료 · 오픈소스</span><span class="en">Free and open source</span></h3>
+      <p>
+        <span class="ko">결제도 계정도 구독도 없습니다. 앱과 친구 연동 서버 코드가 전부 공개돼 있고, 서버는 직접 띄워 쓸 수도 있습니다.</span>
+        <span class="en">No payment, no account, no subscription. The app and the friends server are both open, and you can self-host the server if you'd rather.</span>
+      </p>
+    </div>
+  </div>
+
+  <div class="cmp-scroll">
+    <table class="cmp">
+      <thead>
+        <tr>
+          <th></th>
+          <th>Pomopet</th>
+          <th><span class="ko">보통의 펫 포모도로 앱</span><span class="en">Typical pet pomodoro app</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="ko">펫을 정하는 방식</span><span class="en">Choosing your pet</span></td>
+          <td class="yes"><span class="ko">내 이미지를 올려서</span><span class="en">Upload your own image</span></td>
+          <td><span class="ko">준비된 종류 중 선택</span><span class="en">Pick from a built-in set</span></td>
+        </tr>
+        <tr>
+          <td><span class="ko">하루를 걸렀을 때</span><span class="en">When you skip a day</span></td>
+          <td class="yes"><span class="ko">흑백으로 잠듦</span><span class="en">Sleeps in grayscale</span></td>
+          <td><span class="ko">표정이 시무룩해짐</span><span class="en">Looks a bit sad</span></td>
+        </tr>
+        <tr>
+          <td><span class="ko">가격</span><span class="en">Price</span></td>
+          <td class="yes"><span class="ko">무료</span><span class="en">Free</span></td>
+          <td>$4.99 – $9.99</td>
+        </tr>
+        <tr>
+          <td><span class="ko">코드</span><span class="en">Source</span></td>
+          <td class="yes"><span class="ko">공개 (MIT)</span><span class="en">Open (MIT)</span></td>
+          <td><span class="ko">비공개</span><span class="en">Closed</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="wrap">
+  <span class="eyebrow"><span class="ko">메뉴바 모습</span><span class="en">In the menu bar</span></span>
+  <h2><span class="ko">올린 캐릭터가 그대로 맥 상단에 붙습니다</span><span class="en">Your character sits right at the top of your Mac</span></h2>
+  <p class="lead">
+    <span class="ko">오늘 한 번도 집중하지 않으면 흑백으로 잠들어 있다가, 집중하면 컬러로 깨어나고 옆에 연속일이 붙습니다.
+    집중·휴식 중에는 남은 시간이 표시됩니다. Dock 아이콘은 없습니다.</span>
+    <span class="en">It sleeps in grayscale until you focus, then wakes up in color with your streak beside it.
+    During a session it shows the time left. No Dock icon.</span>
+  </p>
+  <div class="barshots">
+    <figure>
+      <img src="img/bar/wakeup.png" alt="awake pet with streak">
+      <figcaption><span class="ko">오늘 집중함 — 깨어남 · 연속일</span><span class="en">Focused today — awake · streak</span></figcaption>
+    </figure>
+    <figure>
+      <img src="img/bar/minutes.png" alt="remaining minutes">
+      <figcaption><span class="ko">집중·휴식 중 — 남은 시간</span><span class="en">Focusing or on break — time left</span></figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="wrap">
+  <span class="eyebrow"><span class="ko">화면</span><span class="en">Screens</span></span>
+  <h2><span class="ko">쓰는 데 필요한 건 네 화면뿐</span><span class="en">Four screens, that's all</span></h2>
+  <div class="shots">
+    <figure>
+      <img class="ko" src="img/ko/ko_main.png" alt="메인 화면"><img class="en" src="img/en/en_main.png" alt="Main">
+      <figcaption><span class="ko">캐릭터 · 타이머</span><span class="en">Character &amp; timer</span></figcaption>
+    </figure>
+    <figure>
+      <img class="ko" src="img/ko/ko_stats.png" alt="통계"><img class="en" src="img/en/en_stats.png" alt="Stats">
+      <figcaption><span class="ko">연속 기록 · 활동 잔디</span><span class="en">Streak &amp; heatmap</span></figcaption>
+    </figure>
+    <figure>
+      <img class="ko" src="img/ko/ko_friends.png" alt="친구"><img class="en" src="img/en/en_friends.png" alt="Friends">
+      <figcaption><span class="ko">친구 · 쿡 찌르기</span><span class="en">Friends &amp; nudges</span></figcaption>
+    </figure>
+    <figure>
+      <img class="ko" src="img/ko/ko_settings.png" alt="설정"><img class="en" src="img/en/en_settings.png" alt="Settings">
+      <figcaption><span class="ko">설정</span><span class="en">Settings</span></figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="wrap">
+  <span class="eyebrow"><span class="ko">그 밖에</span><span class="en">Also inside</span></span>
+  <h2><span class="ko">기록이 부풀지 않게 만든 것들</span><span class="en">Built so your records stay honest</span></h2>
+  <div class="feats">
+    <div class="feat"><span class="ico">🔥</span><div><b><span class="ko">연속 기록과 마일스톤</span><span class="en">Streaks &amp; milestones</span></b><span class="ko">3일 BRONZE → 7일 SILVER → 30일 GOLD → 100일 DIAMOND 아우라</span><span class="en">3 days BRONZE → 7 SILVER → 30 GOLD → 100 DIAMOND aura</span></div></div>
+    <div class="feat"><span class="ico">🌱</span><div><b><span class="ko">활동 히트맵</span><span class="en">Activity heatmap</span></b><span class="ko">월 달력으로 한눈에. 날짜에 올리면 그날 상세</span><span class="en">A month calendar at a glance; hover a day for details</span></div></div>
+    <div class="feat"><span class="ico">▶️</span><div><b><span class="ko">작업 앱 감지</span><span class="en">Work app detection</span></b><span class="ko">Xcode·VS Code 등을 켜면 5초 뒤 집중 자동 시작 (거절할 시간을 줍니다)</span><span class="en">Open Xcode or VS Code and focus starts after 5s — with time to decline</span></div></div>
+    <div class="feat"><span class="ico">☕</span><div><b><span class="ko">자리 비움 감지</span><span class="en">Idle detection</span></b><span class="ko">5분 넘게 입력이 없으면 중지할지 물어봐 기록이 부풀지 않게</span><span class="en">No input for 5 minutes? It asks whether to stop, so time doesn't inflate</span></div></div>
+    <div class="feat"><span class="ico">👥</span><div><b><span class="ko">친구와 같이 키우기</span><span class="en">Raise pets together</span></b><span class="ko">6자리 코드로 연결. 친구 펫이 잠들어 있으면 쿡 찌르기 (기본 꺼짐)</span><span class="en">Connect with a 6-digit code and nudge sleeping friends (off by default)</span></div></div>
+    <div class="feat"><span class="ico">🔄</span><div><b><span class="ko">자동 업데이트</span><span class="en">Auto update</span></b><span class="ko">앱 안에서 한 번에 설치·재시작 (Sparkle, EdDSA 서명 검증)</span><span class="en">One-click in-app install and restart (Sparkle, EdDSA-verified)</span></div></div>
+    <div class="feat"><span class="ico">🪶</span><div><b><span class="ko">가벼움</span><span class="en">Light</span></b><span class="ko">Dock 아이콘 없이 메뉴바에만. 모든 그래픽은 외부 이미지 없이 코드로 렌더링</span><span class="en">Menu bar only, no Dock icon. Every graphic is drawn in code</span></div></div>
+    <div class="feat"><span class="ico">🌐</span><div><b><span class="ko">한국어 · English</span><span class="en">Korean &amp; English</span></b><span class="ko">시스템 언어를 따르거나 설정에서 즉시 전환</span><span class="en">Follows your system language, or switch instantly in settings</span></div></div>
+  </div>
+</section>
+
+<section id="install" class="wrap">
+  <span class="eyebrow"><span class="ko">설치</span><span class="en">Install</span></span>
+  <h2><span class="ko">한 줄이면 끝납니다</span><span class="en">One line and you're done</span></h2>
+  <p class="lead">
+    <span class="ko">macOS 14 (Sonoma) 이상 · Apple Silicon과 Intel 모두 지원</span>
+    <span class="en">macOS 14 (Sonoma) or later · Apple Silicon and Intel</span>
+  </p>
+
+  <h3 style="margin-top:28px"><span class="ko">방법 1. Homebrew (추천)</span><span class="en">Option 1. Homebrew (recommended)</span></h3>
+  <pre><code>brew install --cask kes02/pomopet/pomopet</code></pre>
+  <p class="meta">
+    <span class="ko">cask가 Gatekeeper 격리 속성을 자동으로 제거해 바로 실행됩니다.</span>
+    <span class="en">The cask clears the Gatekeeper quarantine flag, so it just runs.</span>
+  </p>
+
+  <h3 style="margin-top:28px"><span class="ko">방법 2. DMG 직접 받기</span><span class="en">Option 2. Download the DMG</span></h3>
+  <ol class="steps">
+    <li>
+      <span class="ko"><a href="https://github.com/kes02/Pomopet/releases">Releases</a>에서 최신 <b>Pomopet-x.y.z.dmg</b>를 받습니다.</span>
+      <span class="en">Grab the latest <b>Pomopet-x.y.z.dmg</b> from <a href="https://github.com/kes02/Pomopet/releases">Releases</a>.</span>
+    </li>
+    <li>
+      <span class="ko">dmg를 열고 <b>Pomopet.app</b>을 <b>Applications</b>로 드래그합니다.</span>
+      <span class="en">Open the dmg and drag <b>Pomopet.app</b> into <b>Applications</b>.</span>
+    </li>
+    <li>
+      <span class="ko">미서명 빌드라 첫 실행이 막힙니다. 터미널에서 한 번만 풀어 주세요.</span>
+      <span class="en">It's an unsigned build, so the first launch is blocked. Clear it once in Terminal.</span>
+      <pre><code>xattr -dr com.apple.quarantine /Applications/Pomopet.app</code></pre>
+    </li>
+  </ol>
+  <p class="note">
+    <span class="ko">차단 창에서 <b>"휴지통으로 이동"을 누르지 마세요</b> — 앱이 삭제됩니다. "완료"를 누르고 위 명령을 실행하거나,
+    시스템 설정 → 개인정보 보호 및 보안 → <b>"그래도 열기"</b>를 누르면 됩니다. Apple 서명·공증이 없어 생기는 일이고 최초 1회만 필요합니다.
+    Homebrew로 설치하면 이 과정 자체가 없습니다.</span>
+    <span class="en">Don't click <b>"Move to Trash"</b> in the block dialog — it deletes the app. Click "Done" and run the command above,
+    or go to System Settings → Privacy &amp; Security → <b>"Open Anyway"</b>. This is only because the build isn't Apple-signed, and it's a one-time step.
+    Installing via Homebrew skips it entirely.</span>
+  </p>
+</section>
+
+<section class="wrap">
+  <span class="eyebrow"><span class="ko">개인정보</span><span class="en">Privacy</span></span>
+  <h2><span class="ko">기본값은 "아무것도 보내지 않음"</span><span class="en">The default is "nothing leaves your Mac"</span></h2>
+  <p class="lead">
+    <span class="ko">친구 연동은 기본으로 꺼져 있고, 켜기 전에는 서버로 아무것도 보내지 않습니다.
+    켜면 익명 계정과 6자리 코드가 만들어집니다 — 이메일도 비밀번호도 소셜 로그인도 없습니다.
+    올라가는 건 오늘 집중 시간·세션 수·깨어났는지·연속일·26×26 펫 그림뿐이고, 시각별 기록과 어떤 앱을 켰는지는 올라가지 않습니다.
+    서버 코드도 함께 공개돼 있어 직접 띄워 쓸 수 있습니다.</span>
+    <span class="en">Friends are off by default, and nothing is sent until you turn them on.
+    Turning them on creates an anonymous account with a 6-digit code — no email, no password, no social login.
+    It syncs today's focus minutes, session count, awake state, streak, and a 26×26 pet image. It does not sync timestamps or which apps you opened.
+    The server is open source too, so you can host it yourself.</span>
+  </p>
+  <p>
+    <a href="https://github.com/kes02/Pomopet/blob/main/server/README.md"><span class="ko">서버가 하는 일 자세히 보기 →</span><span class="en">See exactly what the server does →</span></a>
+  </p>
+</section>
+
+<footer class="wrap">
+  <div class="footlinks">
+    <a href="https://github.com/kes02/Pomopet">GitHub</a>
+    <a href="https://github.com/kes02/Pomopet/releases">Releases</a>
+    <a href="https://github.com/kes02/Pomopet/blob/main/CHANGELOG.md">Changelog</a>
+    <a href="https://github.com/kes02/Pomopet/issues"><span class="ko">문의 · 버그</span><span class="en">Issues</span></a>
+  </div>
+  <p style="margin:0 0 8px">
+    <span class="ko">MIT License © 2026 kes02 — 앱 코드에 한해 적용됩니다.</span>
+    <span class="en">MIT License © 2026 kes02 — applies to the app's code.</span>
+  </p>
+  <p style="margin:0">
+    <span class="ko">업로드 기능은 사용자가 고른 로컬 이미지를 변환하는 개인용 기능입니다. 이 앱은 어떤 캐릭터 이미지도 포함·배포하지 않으며,
+    타인의 저작물을 쓸 때는 개인 사용 범위를 지켜 주세요.</span>
+    <span class="en">Uploading converts a local image you chose, for personal use. The app ships no character artwork of its own —
+    if you use someone else's, please keep it to personal use.</span>
+  </p>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ---------- language ---------- */
+  var html = document.documentElement;
+  var langBtn = document.getElementById('langBtn');
+
+  function applyLang(lang) {
+    html.lang = lang;
+    langBtn.textContent = lang === 'ko' ? 'EN' : '한국어';
+    try { localStorage.setItem('pomopet.lang', lang); } catch (e) {}
+  }
+  var saved = null;
+  try { saved = localStorage.getItem('pomopet.lang'); } catch (e) {}
+  var prefersKo = (navigator.language || '').toLowerCase().indexOf('ko') === 0;
+  applyLang(saved === 'ko' || saved === 'en' ? saved : (prefersKo ? 'ko' : 'en'));
+  langBtn.addEventListener('click', function () {
+    applyLang(html.lang === 'ko' ? 'en' : 'ko');
+  });
+
+  /* ---------- copy brew command ---------- */
+  var copyBtn = document.getElementById('copyBtn');
+  copyBtn.addEventListener('click', function () {
+    var text = document.getElementById('brewCmd').textContent;
+    var done = function () {
+      var old = copyBtn.innerHTML;
+      copyBtn.textContent = html.lang === 'ko' ? '복사됨 ✓' : 'Copied ✓';
+      setTimeout(function () { copyBtn.innerHTML = old; }, 1600);
+    };
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(done, function () {});
+    }
+  });
+
+  /* ---------- pixel pet demo ----------
+     Mirrors the app: a 26x26 colour grid, cells under 25% alpha are transparent,
+     each cell is the average colour of the source pixels underneath it.        */
+  var N = 26;                    // CustomPet.renderResolution
+  var ALPHA_MIN = 0.25;          // ImagePixelizer alpha threshold
+  var petCanvas = document.getElementById('petCanvas');
+  var barCanvas = document.getElementById('barCanvas');
+  var petCtx = petCanvas.getContext('2d');
+  var barCtx = barCanvas.getContext('2d');
+  var awake = true;
+  var grid = null;               // [[ [r,g,b] | null ] x N] x N
+
+  // default pet, drawn in code (the app ships no character artwork either)
+  var ART = [
+    '................',
+    '...o........o...',
+    '...oo......oo...',
+    '...obo....obo...',
+    '..obbbooooobbo..',
+    '..obbbbbbbbbbo..',
+    '.obbbbbbbbbbbbo.',
+    '.obbebbbbbbebbo.',
+    '.obbbbbbbbbbbbo.',
+    '.obbbpbllbpbbbo.',
+    '.obbbbllllbbbbo.',
+    '..obbbllllbbbo..',
+    '..obbbbllllbbo..',
+    '...obbbbbbbbo...',
+    '....oooooooo....',
+    '................'
+  ];
+  var PALETTE = {
+    o: [92, 52, 32],
+    b: [242, 155, 84],
+    l: [255, 232, 200],
+    e: [56, 33, 22],
+    p: [240, 130, 130]
+  };
+
+  function defaultGrid() {
+    var g = [], y, x;
+    for (y = 0; y < N; y++) { g.push(new Array(N).fill(null)); }
+    var off = Math.floor((N - ART.length) / 2);
+    for (y = 0; y < ART.length; y++) {
+      for (x = 0; x < ART[y].length; x++) {
+        var c = PALETTE[ART[y][x]];
+        if (c) g[y + off][x + off] = c;
+      }
+    }
+    return g;
+  }
+
+  function gridFromImage(img) {
+    // square-crop from the centre so nothing stretches, then average per cell
+    var side = Math.min(img.width, img.height);
+    var sx = (img.width - side) / 2, sy = (img.height - side) / 2;
+    var work = document.createElement('canvas');
+    work.width = work.height = 208;
+    var wctx = work.getContext('2d', { willReadFrequently: true });
+    wctx.drawImage(img, sx, sy, side, side, 0, 0, 208, 208);
+    var data = wctx.getImageData(0, 0, 208, 208).data;
+    var cell = 208 / N;
+    var g = [], y, x;
+    for (y = 0; y < N; y++) {
+      var row = [];
+      for (x = 0; x < N; x++) {
+        var r = 0, gg = 0, b = 0, n = 0;
+        for (var py = Math.floor(y * cell); py < Math.floor((y + 1) * cell); py++) {
+          for (var px = Math.floor(x * cell); px < Math.floor((x + 1) * cell); px++) {
+            var i = (py * 208 + px) * 4;
+            if (data[i + 3] / 255 < ALPHA_MIN) continue;
+            r += data[i]; gg += data[i + 1]; b += data[i + 2]; n++;
+          }
+        }
+        row.push(n === 0 ? null : [r / n, gg / n, b / n]);
+      }
+      g.push(row);
+    }
+    return g;
+  }
+
+  function draw(ctx, canvas) {
+    ctx.clearRect(0, 0, N, N);
+    for (var y = 0; y < N; y++) {
+      for (var x = 0; x < N; x++) {
+        var c = grid[y][x];
+        if (!c) continue;
+        var r = c[0], g = c[1], b = c[2];
+        if (!awake) {                                  // asleep: grayscale + dimmed
+          var lum = 0.299 * r + 0.587 * g + 0.114 * b;
+          r = g = b = lum * 0.55 + 40;
+        }
+        ctx.fillStyle = 'rgb(' + (r | 0) + ',' + (g | 0) + ',' + (b | 0) + ')';
+        ctx.fillRect(x, y, 1, 1);
+      }
+    }
+  }
+
+  function render() {
+    draw(petCtx, petCanvas);
+    draw(barCtx, barCanvas);
+    document.getElementById('streakText').textContent = awake ? '🔥 12' : '';
+    petCanvas.style.opacity = awake ? '1' : '0.75';
+  }
+
+  function setAwake(v) {
+    awake = v;
+    document.getElementById('tAwake').setAttribute('aria-pressed', String(v));
+    document.getElementById('tAsleep').setAttribute('aria-pressed', String(!v));
+    render();
+  }
+
+  function loadFile(file) {
+    if (!file || file.type.indexOf('image/') !== 0) return;
+    var url = URL.createObjectURL(file);
+    var img = new Image();
+    img.onload = function () {
+      grid = gridFromImage(img);
+      URL.revokeObjectURL(url);
+      setAwake(true);
+    };
+    img.src = url;
+  }
+
+  document.getElementById('tAwake').addEventListener('click', function () { setAwake(true); });
+  document.getElementById('tAsleep').addEventListener('click', function () { setAwake(false); });
+  document.getElementById('petFile').addEventListener('change', function (e) {
+    loadFile(e.target.files && e.target.files[0]);
+  });
+
+  var stage = document.getElementById('stage');
+  ['dragenter', 'dragover'].forEach(function (ev) {
+    stage.addEventListener(ev, function (e) { e.preventDefault(); stage.classList.add('drag'); });
+  });
+  ['dragleave', 'drop'].forEach(function (ev) {
+    stage.addEventListener(ev, function (e) { e.preventDefault(); stage.classList.remove('drag'); });
+  });
+  stage.addEventListener('drop', function (e) {
+    loadFile(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]);
+  });
+
+  grid = defaultGrid();
+  render();
+})();
+</script>
+</body>
+</html>
